@@ -645,6 +645,329 @@ tr:hover td { background: var(--surface-2); }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
 
+/* ═══════════════════════════════════════════════════
+   PREVENTION CARDS SECTION
+═══════════════════════════════════════════════════ */
+.section-heading {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 500;
+  color: var(--text-1); letter-spacing: -0.3px;
+}
+
+.section-sub {
+  font-size: 12px; color: var(--text-3);
+}
+
+/* Prevention grid — 3 columns on desktop, 1 on mobile */
+.prevention-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.prev-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 22px 20px;
+  display: flex; flex-direction: column; gap: 14px;
+  transition: var(--t);
+  position: relative; overflow: hidden;
+}
+
+/* Subtle coloured top accent per card */
+.prev-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+
+.prev-card.uv::before     { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.prev-card.abcde::before  { background: linear-gradient(90deg, var(--blue), #6ea3ff); }
+.prev-card.hydrate::before{ background: linear-gradient(90deg, var(--green), #4ade80); }
+
+.prev-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-mid);
+}
+
+.prev-icon-ring {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+
+.prev-card.uv      .prev-icon-ring { background: #fef9c3; }
+.prev-card.abcde   .prev-icon-ring { background: var(--blue-soft); }
+.prev-card.hydrate .prev-icon-ring { background: var(--green-soft); }
+
+.prev-card-title {
+  font-family: var(--font-display);
+  font-size: 14.5px; font-weight: 500;
+  color: var(--text-1); letter-spacing: -0.2px;
+  margin-bottom: 2px;
+}
+
+.prev-card-desc {
+  font-size: 12.5px; color: var(--text-2);
+  line-height: 1.65;
+}
+
+/* Tip chips inside prevention cards */
+.tip-list {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 2px;
+}
+
+.tip-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 12px; color: var(--text-2);
+  line-height: 1.5;
+}
+
+.tip-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 6px;
+}
+
+.prev-card.uv      .tip-dot { background: #f59e0b; }
+.prev-card.abcde   .tip-dot { background: var(--blue); }
+.prev-card.hydrate .tip-dot { background: var(--green); }
+
+/* ABCDE pill row */
+.abcde-pill-row {
+  display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px;
+}
+
+.abcde-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--blue-soft);
+  border: 1px solid rgba(59,111,240,0.18);
+  font-family: var(--font-display);
+  font-size: 13px; font-weight: 500; color: var(--blue);
+}
+
+/* ═══════════════════════════════════════════════════
+   HOSPITAL LOCATOR SECTION
+═══════════════════════════════════════════════════ */
+.locator-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.locator-header {
+  padding: 20px 22px 0;
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+}
+
+.city-select-wrap {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.city-label {
+  font-size: 12px; font-weight: 500;
+  color: var(--text-3); white-space: nowrap;
+}
+
+.city-select {
+  padding: 7px 32px 7px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text-1);
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; outline: none;
+  transition: var(--t);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238fa3bb' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.city-select:focus {
+  border-color: var(--blue);
+  background-color: var(--surface);
+  box-shadow: 0 0 0 3px rgba(59,111,240,0.1);
+}
+
+.map-frame-wrap {
+  margin: 16px 0 0;
+  position: relative;
+}
+
+.map-frame-wrap iframe {
+  width: 100%;
+  height: 340px;
+  border: 0;
+  display: block;
+}
+
+.map-caption {
+  padding: 10px 22px 16px;
+  font-size: 11.5px; color: var(--text-3);
+  display: flex; align-items: center; gap: 5px;
+}
+
+/* ═══════════════════════════════════════════════════
+   DEVELOPER MODE PANEL
+═══════════════════════════════════════════════════ */
+/* Hidden trigger at page bottom — subtle, triple-click reveals */
+.dev-trigger-zone {
+  width: 100%; padding: 20px 0 8px;
+  display: flex; justify-content: center;
+}
+
+.dev-trigger-btn {
+  font-size: 11px; color: var(--text-4);
+  background: none; border: none;
+  cursor: pointer; letter-spacing: 0.5px;
+  padding: 4px 10px; border-radius: 20px;
+  transition: var(--t);
+  user-select: none;
+}
+
+.dev-trigger-btn:hover {
+  color: var(--text-3);
+  background: var(--surface-3);
+}
+
+/* Dev panel drawer — slides in from bottom */
+.dev-panel {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  animation: slideDown 0.3s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.dev-panel.open { display: block; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dev-panel-header {
+  padding: 14px 20px;
+  background: #0f172a;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.dev-panel-title {
+  font-family: 'Courier New', monospace;
+  font-size: 13px; font-weight: 600;
+  color: #38bdf8;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.dev-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #22c55e;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+.dev-close {
+  font-size: 18px; cursor: pointer;
+  color: #64748b; line-height: 1;
+  background: none; border: none;
+  transition: var(--t);
+}
+.dev-close:hover { color: #f8fafc; }
+
+.dev-panel-body {
+  padding: 18px 20px;
+  background: #0f172a;
+  border-top: 1px solid #1e293b;
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* Stats row */
+.dev-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.dev-stat {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.dev-stat-label {
+  font-family: 'Courier New', monospace;
+  font-size: 10px; color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+
+.dev-stat-value {
+  font-family: 'Courier New', monospace;
+  font-size: 20px; font-weight: 700;
+  color: #38bdf8;
+}
+
+/* Log lines */
+.dev-log-area {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 120px; overflow-y: auto;
+}
+
+.dev-log-line {
+  font-family: 'Courier New', monospace;
+  font-size: 11.5px; color: #94a3b8;
+  line-height: 1.6;
+}
+
+.dev-log-line .log-ok     { color: #22c55e; }
+.dev-log-line .log-warn   { color: #f59e0b; }
+.dev-log-line .log-time   { color: #475569; }
+
+/* Quick links */
+.dev-links-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+.dev-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px; color: #94a3b8;
+  text-decoration: none;
+  transition: var(--t);
+}
+
+.dev-link:hover {
+  border-color: #38bdf8;
+  color: #38bdf8;
+  background: rgba(56,189,248,0.08);
+}
+
 /* ── Responsive ───────────────────────────────── */
 @media (max-width: 1080px) { .bottom-row { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 860px) {
@@ -654,6 +977,15 @@ tr:hover td { background: var(--surface-2); }
   .bottom-row { grid-template-columns: 1fr; }
   .content { padding: 16px; }
   .topbar { padding: 0 16px; }
+  .prevention-grid { grid-template-columns: 1fr; }
+  .dev-stats-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 540px) {
+  .dev-stats-row { grid-template-columns: 1fr; }
+  .locator-header { flex-direction: column; }
+  .city-select-wrap { width: 100%; }
+  .city-select { flex: 1; }
 }
 </style>
 </head>
@@ -903,6 +1235,229 @@ tr:hover td { background: var(--surface-2); }
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SECTION: HEALTHCARE PRECAUTIONS
+    ══════════════════════════════════════════════ -->
+    <div class="fade-up">
+      <div class="section-heading">
+        <div class="section-title">🛡️ Prevention &amp; Care</div>
+        <div class="section-sub">Evidence-based skin health guidelines</div>
+      </div>
+
+      <div class="prevention-grid">
+
+        <!-- Card 1: UV Protection -->
+        <div class="prev-card uv">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="prev-icon-ring">☀️</div>
+            <div>
+              <div class="prev-card-title">UV Protection</div>
+              <div class="prev-card-desc" style="font-size:11.5px;margin-top:1px;">Shield your skin from harmful sun radiation</div>
+            </div>
+          </div>
+          <div class="tip-list">
+            <div class="tip-item"><div class="tip-dot"></div>Apply SPF 30+ sunscreen 20 mins before going outdoors</div>
+            <div class="tip-item"><div class="tip-dot"></div>Reapply every 2 hours, especially after swimming or sweating</div>
+            <div class="tip-item"><div class="tip-dot"></div>Wear wide-brim hats and UV-blocking sunglasses</div>
+            <div class="tip-item"><div class="tip-dot"></div>Seek shade between 10 AM – 4 PM (peak UV hours)</div>
+            <div class="tip-item"><div class="tip-dot"></div>UV rays penetrate clouds — protect skin on overcast days too</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:9px 12px;background:#fef9c3;border-radius:8px;border:1px solid #fde68a;margin-top:2px;">
+            <span style="font-size:14px;">⚡</span>
+            <span style="font-size:11.5px;color:#92400e;font-weight:500;">UV Index above 6? Stay in shade or cover up.</span>
+          </div>
+        </div>
+
+        <!-- Card 2: ABCDE Mole Check -->
+        <div class="prev-card abcde">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="prev-icon-ring">🔍</div>
+            <div>
+              <div class="prev-card-title">ABCDE Mole Check</div>
+              <div class="prev-card-desc" style="font-size:11.5px;margin-top:1px;">Monthly self-examination guide</div>
+            </div>
+          </div>
+          <div class="abcde-pill-row">
+            <div class="abcde-pill" title="Asymmetry">A</div>
+            <div class="abcde-pill" title="Border">B</div>
+            <div class="abcde-pill" title="Colour">C</div>
+            <div class="abcde-pill" title="Diameter">D</div>
+            <div class="abcde-pill" title="Evolving">E</div>
+          </div>
+          <div class="tip-list">
+            <div class="tip-item"><div class="tip-dot"></div><span><strong>Asymmetry</strong> — one half doesn't mirror the other</span></div>
+            <div class="tip-item"><div class="tip-dot"></div><span><strong>Border</strong> — irregular, ragged or blurred edges</span></div>
+            <div class="tip-item"><div class="tip-dot"></div><span><strong>Colour</strong> — multiple shades of brown, black, red or white</span></div>
+            <div class="tip-item"><div class="tip-dot"></div><span><strong>Diameter</strong> — larger than 6 mm (pencil eraser size)</span></div>
+            <div class="tip-item"><div class="tip-dot"></div><span><strong>Evolving</strong> — any change in size, shape or colour</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--blue-soft);border-radius:8px;border:1px solid rgba(59,111,240,0.2);margin-top:2px;">
+            <span style="font-size:14px;">📅</span>
+            <span style="font-size:11.5px;color:var(--blue-dark);font-weight:500;">Check all moles monthly. See a dermatologist annually.</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Skin Hydration -->
+        <div class="prev-card hydrate">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="prev-icon-ring">💧</div>
+            <div>
+              <div class="prev-card-title">Skin Hydration &amp; Diet</div>
+              <div class="prev-card-desc" style="font-size:11.5px;margin-top:1px;">Nourish your skin from within</div>
+            </div>
+          </div>
+          <div class="tip-list">
+            <div class="tip-item"><div class="tip-dot"></div>Drink 8–10 glasses of water daily to maintain skin elasticity</div>
+            <div class="tip-item"><div class="tip-dot"></div>Eat antioxidant-rich foods — berries, leafy greens, tomatoes</div>
+            <div class="tip-item"><div class="tip-dot"></div>Use a fragrance-free moisturiser twice daily</div>
+            <div class="tip-item"><div class="tip-dot"></div>Avoid smoking — it accelerates skin ageing and cell damage</div>
+            <div class="tip-item"><div class="tip-dot"></div>Omega-3 fatty acids (fish, flaxseed) reduce inflammation</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--green-soft);border-radius:8px;border:1px solid var(--green-border);margin-top:2px;">
+            <span style="font-size:14px;">🥦</span>
+            <span style="font-size:11.5px;color:#166534;font-weight:500;">A balanced diet is your skin's best long-term defence.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SECTION: HOSPITAL LOCATOR MAP
+    ══════════════════════════════════════════════ -->
+    <div class="fade-up">
+      <div class="section-heading">
+        <div class="section-title">🏥 Find a Dermatologist Near You</div>
+        <div class="section-sub">Locate skin cancer specialists and hospitals</div>
+      </div>
+
+      <div class="locator-card">
+        <div class="locator-header">
+          <div>
+            <div class="card-title" style="font-size:14.5px;">Nearby Skin Cancer Hospitals</div>
+            <div class="card-sub">Select your city to view specialist centres on the map</div>
+          </div>
+          <div class="city-select-wrap">
+            <span class="city-label">📍 City:</span>
+            <select class="city-select" id="citySelect" onchange="updateMap()">
+              <option value="">— Choose City —</option>
+              <optgroup label="Maharashtra">
+                <option value="Jalgaon, Maharashtra">Jalgaon</option>
+                <option value="Mumbai, Maharashtra">Mumbai</option>
+                <option value="Pune, Maharashtra">Pune</option>
+                <option value="Nagpur, Maharashtra">Nagpur</option>
+                <option value="Nashik, Maharashtra">Nashik</option>
+                <option value="Aurangabad, Maharashtra">Aurangabad</option>
+              </optgroup>
+              <optgroup label="Other Cities">
+                <option value="Delhi, India">Delhi</option>
+                <option value="Bangalore, Karnataka">Bangalore</option>
+                <option value="Hyderabad, Telangana">Hyderabad</option>
+                <option value="Chennai, Tamil Nadu">Chennai</option>
+                <option value="Kolkata, West Bengal">Kolkata</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <!-- Map frame — updated dynamically -->
+        <div class="map-frame-wrap">
+          <div id="mapPlaceholder" style="
+            height:340px; display:flex; flex-direction:column;
+            align-items:center; justify-content:center; gap:10px;
+            background:var(--surface-2); border-top:1px solid var(--border);
+          ">
+            <span style="font-size:36px;opacity:0.25;">🗺️</span>
+            <span style="font-size:13px;color:var(--text-3);">Select a city above to load the hospital map</span>
+          </div>
+          <iframe
+            id="mapFrame"
+            style="display:none;"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
+        </div>
+
+        <div class="map-caption">
+          <span>ℹ️</span>
+          Map shows dermatology &amp; oncology hospitals in the selected city.
+          Always call ahead to confirm appointment availability.
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         DEVELOPER MODE TRIGGER (bottom of page)
+    ══════════════════════════════════════════════ -->
+    <div class="dev-trigger-zone">
+      <button class="dev-trigger-btn" id="devTrigger" onclick="toggleDevPanel()" title="Developer Mode">
+        ··· developer mode
+      </button>
+    </div>
+
+    <!-- DEV PANEL (hidden by default) -->
+    <div class="dev-panel" id="devPanel">
+
+      <div class="dev-panel-header">
+        <div class="dev-panel-title">
+          <div class="dev-dot"></div>
+          SkinScan AI — Developer Console
+        </div>
+        <button class="dev-close" onclick="toggleDevPanel()">✕</button>
+      </div>
+
+      <div class="dev-panel-body">
+
+        <!-- Session stats row -->
+        <div class="dev-stats-row">
+          <div class="dev-stat">
+            <div class="dev-stat-label">Session Scans</div>
+            <div class="dev-stat-value" id="devScanCount">0</div>
+          </div>
+          <div class="dev-stat">
+            <div class="dev-stat-label">Malignant Found</div>
+            <div class="dev-stat-value" id="devMalCount">0</div>
+          </div>
+          <div class="dev-stat">
+            <div class="dev-stat-label">Avg Confidence</div>
+            <div class="dev-stat-value" id="devAvgConf">—</div>
+          </div>
+        </div>
+
+        <!-- Live log area -->
+        <div class="dev-log-area" id="devLog">
+          <div class="dev-log-line"><span class="log-time">[init]</span> &nbsp;SkinScan AI frontend loaded</div>
+          <div class="dev-log-line"><span class="log-time">[init]</span> &nbsp;localStorage history: <span class="log-ok" id="devHistCount">0</span> records</div>
+          <div class="dev-log-line"><span class="log-time">[info]</span> &nbsp;Backend URL: <span class="log-ok" id="devApiUrl">—</span></div>
+          <div class="dev-log-line"><span class="log-time">[info]</span> &nbsp;Session started: <span class="log-ok" id="devSessionTime">—</span></div>
+        </div>
+
+        <!-- Quick links to Render and tools -->
+        <div>
+          <div class="dev-stat-label" style="color:#64748b;margin-bottom:8px;">QUICK LINKS</div>
+          <div class="dev-links-row">
+            <a class="dev-link" id="devRenderLink" href="https://dashboard.render.com" target="_blank" rel="noopener">
+              🚀 Render Dashboard
+            </a>
+            <a class="dev-link" id="devLogsLink" href="https://dashboard.render.com" target="_blank" rel="noopener">
+              📋 Live Logs
+            </a>
+            <a class="dev-link" id="devDocsLink" href="https://skinscan-api-herm.onrender.com" target="_blank" rel="noopener">
+              📖 FastAPI Docs
+            </a>
+            <a class="dev-link" id="devHealthLink" href="https://skinscan-api-herm.onrender.com/health" target="_blank" rel="noopener">
+              ❤️ Health Check
+            </a>
+            <a class="dev-link" href="#" onclick="exportDevReport();return false;">
+              ⬇ Export Session Log
+            </a>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1159,6 +1714,153 @@ new Chart(document.getElementById('lineChart'), {
 });
 
 renderHistory();
+
+/* ══════════════════════════════════════════════════
+   HOSPITAL LOCATOR MAP
+══════════════════════════════════════════════════ */
+function updateMap() {
+  const city  = document.getElementById('citySelect').value;
+  const frame = document.getElementById('mapFrame');
+  const ph    = document.getElementById('mapPlaceholder');
+
+  if (!city) {
+    frame.style.display = 'none';
+    ph.style.display    = 'flex';
+    return;
+  }
+
+  const query = encodeURIComponent('skin cancer dermatologist hospital in ' + city);
+  frame.src   = 'https://maps.google.com/maps?q=' + query + '&output=embed&z=13';
+  ph.style.display    = 'none';
+  frame.style.display = 'block';
+  toast('📍 Loading hospitals in ' + city.split(',')[0] + '…', 'success');
+}
+
+/* ══════════════════════════════════════════════════
+   DEVELOPER MODE PANEL
+══════════════════════════════════════════════════ */
+let devOpen      = false;
+let sessionScans = 0;
+let sessionMal   = 0;
+let sessionConfs = [];
+const SESSION_START = new Date();
+
+// Init dev log static lines
+(function initDevLog() {
+  document.getElementById('devHistCount').textContent  = scanHistory.length;
+  document.getElementById('devSessionTime').textContent =
+    SESSION_START.toLocaleTimeString('en-IN', { hour12: true });
+})();
+
+function toggleDevPanel() {
+  devOpen = !devOpen;
+  const panel = document.getElementById('devPanel');
+  panel.classList.toggle('open', devOpen);
+  if (devOpen) {
+    refreshDevStats();
+    setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
+}
+
+function refreshDevStats() {
+  const apiUrl = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+  document.getElementById('devApiUrl').textContent = apiUrl || 'not set';
+
+  if (apiUrl) {
+    document.getElementById('devDocsLink').href   = apiUrl + '/docs';
+    document.getElementById('devHealthLink').href = apiUrl + '/health';
+    const slug = apiUrl.replace('https://', '').split('.')[0];
+    document.getElementById('devLogsLink').href   =
+      'https://dashboard.render.com/web/' + slug + '/logs';
+  }
+
+  document.getElementById('devScanCount').textContent = sessionScans;
+  document.getElementById('devMalCount').textContent  = sessionMal;
+  document.getElementById('devAvgConf').textContent   =
+    sessionConfs.length
+      ? (sessionConfs.reduce((a, b) => a + b, 0) / sessionConfs.length).toFixed(1) + '%'
+      : '—';
+  document.getElementById('devHistCount').textContent = scanHistory.length;
+}
+
+function addDevLog(msg, type) {
+  type = type || 'ok';
+  const log  = document.getElementById('devLog');
+  const time = new Date().toLocaleTimeString('en-IN', { hour12: false });
+  const line = document.createElement('div');
+  line.className = 'dev-log-line';
+  line.innerHTML = '<span class="log-time">[' + time + ']</span>&nbsp; ' +
+                   '<span class="log-' + type + '">' + msg + '</span>';
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+function exportDevReport() {
+  const avg = sessionConfs.length
+    ? (sessionConfs.reduce((a, b) => a + b, 0) / sessionConfs.length).toFixed(2)
+    : null;
+  const report = {
+    session_start   : SESSION_START.toISOString(),
+    session_scans   : sessionScans,
+    malignant_found : sessionMal,
+    avg_confidence  : avg,
+    scan_history    : scanHistory,
+    api_url         : document.getElementById('apiUrl').value.trim(),
+    exported_at     : new Date().toISOString(),
+  };
+  const a  = document.createElement('a');
+  a.href   = URL.createObjectURL(
+    new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+  );
+  a.download = 'skinscan_dev_log_' + Date.now() + '.json';
+  a.click();
+  toast('📦 Dev session log exported.', 'success');
+}
+
+/* ── Extend runAnalysis to track dev stats ──────── */
+/* Save reference to original and replace with extended version */
+const _baseRunAnalysis = runAnalysis;
+
+runAnalysis = async function() {
+  if (!currentFile) return;
+  const url = apiBase();
+  if (!url) { toast('⚠️ Enter your backend URL first.', 'error'); return; }
+  showVeil(true);
+  const fd = new FormData();
+  fd.append('file', currentFile);
+  try {
+    const res = await fetch(url + '/predict', {
+      method: 'POST', body: fd,
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'HTTP ' + res.status);
+    }
+    const data = await res.json();
+    lastReport = data;
+    displayResult(data);
+    addHistory(data);
+    toast('✅ Analysis complete!', 'success');
+
+    /* Dev panel stats update */
+    sessionScans++;
+    if (data.prediction === 'Malignant') sessionMal++;
+    if (data.confidence) sessionConfs.push(+data.confidence);
+    addDevLog(
+      'Scan #' + (data.scan_id || sessionScans) + ' → ' +
+      data.prediction + ' (' + (+( data.confidence || 0)).toFixed(1) + '%)',
+      data.prediction === 'Malignant' ? 'warn' : 'ok'
+    );
+    if (devOpen) refreshDevStats();
+
+  } catch (err) {
+    toast('❌ ' + err.message, 'error');
+    addDevLog('Error: ' + err.message, 'warn');
+  } finally {
+    showVeil(false);
+  }
+};
 </script>
 </body>
 </html>
