@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SkinScan AI — Intelligent Dermatology Platform</title>
 
-<!-- Fonts: Fraunces (display) + Geist (body) -->
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <style>
 /* ═══════════════════════════════════════════════════
@@ -987,23 +987,83 @@ tr:hover td { background: var(--surface-2); }
   .city-select-wrap { width: 100%; }
   .city-select { flex: 1; }
 }
+
+/* ═══════════════════════════════════════════════════
+   FLOATING LANGUAGE TOGGLE
+═══════════════════════════════════════════════════ */
+.lang-fab {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  z-index: 1000;
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--border-mid);
+  border-radius: 50px;
+  box-shadow: 0 4px 20px rgba(16,24,40,0.14);
+  cursor: pointer;
+  transition: var(--t);
+}
+
+.lang-fab:hover {
+  border-color: var(--blue);
+  box-shadow: 0 6px 24px rgba(59,111,240,0.18);
+}
+
+.lang-fab-icon { font-size: 16px; }
+
+.lang-fab select {
+  border: none; outline: none; background: transparent;
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 500;
+  color: var(--text-1); cursor: pointer;
+  padding-right: 2px;
+}
+
+/* ── Camera button below dropzone ─────────────── */
+.btn-camera {
+  width: 100%; padding: 9px;
+  background: var(--surface-3);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  transition: var(--t);
+}
+
+.btn-camera:hover {
+  border-color: var(--blue); color: var(--blue);
+  background: var(--blue-soft);
+}
+
+/* ── PDF button beside JSON button ───────────── */
+#pdfBtn { display: none; }
+
+/* ── PDF report template (invisible in browser) ─ */
+#pdfReportWrap {
+  display: none;
+  position: absolute;
+  left: -9999px; top: 0;
+  width: 794px;
+}
+
 </style>
 </head>
 <body>
 
-<!-- Loading veil -->
 <div class="veil" id="veil">
   <div class="spinner"></div>
   <div class="veil-text">Analyzing scan…</div>
   <div class="veil-sub">Running TFLite inference on your image</div>
 </div>
 
-<!-- Toast container -->
 <div class="toast-stack" id="toastStack"></div>
 
 <div class="shell">
 
-  <!-- ══ SIDEBAR ══════════════════════════════════ -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-lockup">
@@ -1040,7 +1100,6 @@ tr:hover td { background: var(--surface-2); }
     </div>
   </aside>
 
-  <!-- ══ TOPBAR ═════════════════════════════════ -->
   <header class="topbar">
     <div class="topbar-title">Dashboard <span>/ AI Diagnosis</span></div>
     <div class="topbar-right">
@@ -1050,13 +1109,10 @@ tr:hover td { background: var(--surface-2); }
     </div>
   </header>
 
-  <!-- ══ MAIN CONTENT ════════════════════════════ -->
   <main class="content">
 
-    <!-- Upload + Result -->
     <div class="mid-row">
 
-      <!-- Upload card -->
       <div class="card upload-card fade-up d1">
         <div class="card-header">
           <div>
@@ -1070,7 +1126,7 @@ tr:hover td { background: var(--surface-2); }
           <div class="drop-default">
             <div class="drop-icon-ring">🖼️</div>
             <div class="drop-title">Drop image here or <a>browse files</a></div>
-            <div class="drop-hint">Maximum file size: 10 MB</div>
+            <div class="drop-hint" data-i18n="upload_hint">Maximum file size: 10 MB</div>
             <div class="fmt-row">
               <span class="fmt-tag">JPG</span>
               <span class="fmt-tag">PNG</span>
@@ -1083,7 +1139,7 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
-        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="onFileChange(event)"/>
+        <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="onFileChange(event)"/>
 
         <div id="fileRow" style="display:none; align-items:center; gap:10px;">
           <span style="font-size:13px;color:var(--text-2);">📄</span>
@@ -1093,8 +1149,14 @@ tr:hover td { background: var(--surface-2); }
         </div>
 
         <button class="btn-primary" id="analyzeBtn" onclick="runAnalysis()" disabled>
-          🧬 Run AI Analysis
+          🧬 <span data-i18n="analyze">Run AI Analysis</span>
         </button>
+
+        <button class="btn-camera" onclick="openCamera()" title="Open camera to take a photo">
+          📷 <span data-i18n="open_camera">Open Camera</span>
+        </button>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment"
+               style="display:none" onchange="onFileChange(event)"/>
 
         <div class="api-row">
           <input class="api-input" id="apiUrl" type="text"
@@ -1106,14 +1168,16 @@ tr:hover td { background: var(--surface-2); }
         </div>
       </div>
 
-      <!-- Result panel -->
       <div class="card result-panel fade-up d2">
         <div class="card-header">
           <div>
             <div class="card-title">📋 Diagnosis Report</div>
             <div class="card-sub">AI-generated clinical summary</div>
           </div>
-          <button class="btn-ghost" id="dlBtn" onclick="downloadReport()" style="display:none;">⬇ JSON</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn-ghost" id="dlBtn" onclick="downloadReport()" style="display:none;">⬇ JSON</button>
+            <button class="btn-ghost" id="pdfBtn" onclick="downloadPDFReport()" style="display:none;">🖨 PDF</button>
+          </div>
         </div>
 
         <div class="result-empty" id="emptyState">
@@ -1136,7 +1200,7 @@ tr:hover td { background: var(--surface-2); }
 
           <div style="display:flex;flex-direction:column;gap:7px;">
             <div class="conf-row">
-              <span class="conf-label">Confidence Score</span>
+              <span class="conf-label" data-i18n="confidence">Confidence Score</span>
               <span class="conf-value" id="confValue">0%</span>
             </div>
             <div class="bar-bg">
@@ -1146,11 +1210,11 @@ tr:hover td { background: var(--surface-2); }
 
           <div class="prob-grid">
             <div class="prob-pill">
-              <div class="prob-pill-label">P(Benign)</div>
+              <div class="prob-pill-label" data-i18n="p_benign">P(Benign)</div>
               <div class="prob-pill-value green" id="pBen">—</div>
             </div>
             <div class="prob-pill">
-              <div class="prob-pill-label">P(Malignant)</div>
+              <div class="prob-pill-label" data-i18n="p_malignant">P(Malignant)</div>
               <div class="prob-pill-value red" id="pMal">—</div>
             </div>
           </div>
@@ -1158,7 +1222,7 @@ tr:hover td { background: var(--surface-2); }
           <div class="meta-wrap" id="metaRow"></div>
 
           <div class="action-box">
-            <strong>Recommended Action</strong>
+            <strong data-i18n="rec_action">Recommended Action</strong>
             <span id="actionText">—</span>
           </div>
 
@@ -1167,7 +1231,6 @@ tr:hover td { background: var(--surface-2); }
       </div>
     </div>
 
-    <!-- Bottom row -->
     <div class="bottom-row">
 
       <div class="card chart-card fade-up d2">
@@ -1213,10 +1276,9 @@ tr:hover td { background: var(--surface-2); }
       </div>
     </div>
 
-    <!-- History table -->
     <div class="card history-card fade-up">
       <div class="card-header" style="margin-bottom:12px;">
-        <div class="card-title">🕓 Recent Scan History</div>
+        <div class="card-title" data-i18n="scan_history">🕓 Recent Scan History</div>
         <button class="btn-ghost" onclick="clearHistory()">Clear</button>
       </div>
       <div class="table-wrap">
@@ -1238,18 +1300,14 @@ tr:hover td { background: var(--surface-2); }
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════
-         SECTION: HEALTHCARE PRECAUTIONS
-    ══════════════════════════════════════════════ -->
     <div class="fade-up">
       <div class="section-heading">
-        <div class="section-title">🛡️ Prevention &amp; Care</div>
+        <div class="section-title" data-i18n="precautions">🛡️ Prevention & Care</div>
         <div class="section-sub">Evidence-based skin health guidelines</div>
       </div>
 
       <div class="prevention-grid">
 
-        <!-- Card 1: UV Protection -->
         <div class="prev-card uv">
           <div style="display:flex;align-items:center;gap:12px;">
             <div class="prev-icon-ring">☀️</div>
@@ -1271,7 +1329,6 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
-        <!-- Card 2: ABCDE Mole Check -->
         <div class="prev-card abcde">
           <div style="display:flex;align-items:center;gap:12px;">
             <div class="prev-icon-ring">🔍</div>
@@ -1300,12 +1357,11 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
-        <!-- Card 3: Skin Hydration -->
         <div class="prev-card hydrate">
           <div style="display:flex;align-items:center;gap:12px;">
             <div class="prev-icon-ring">💧</div>
             <div>
-              <div class="prev-card-title">Skin Hydration &amp; Diet</div>
+              <div class="prev-card-title">Skin Hydration & Diet</div>
               <div class="prev-card-desc" style="font-size:11.5px;margin-top:1px;">Nourish your skin from within</div>
             </div>
           </div>
@@ -1325,9 +1381,6 @@ tr:hover td { background: var(--surface-2); }
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════
-         SECTION: HOSPITAL LOCATOR MAP
-    ══════════════════════════════════════════════ -->
     <div class="fade-up">
       <div class="section-heading">
         <div class="section-title">🏥 Find a Dermatologist Near You</div>
@@ -1337,45 +1390,386 @@ tr:hover td { background: var(--surface-2); }
       <div class="locator-card">
         <div class="locator-header">
           <div>
-            <div class="card-title" style="font-size:14.5px;">Nearby Skin Cancer Hospitals</div>
-            <div class="card-sub">Select your city to view specialist centres on the map</div>
+            <div class="card-title" style="font-size:14.5px;">🌍 Worldwide Skin Cancer Hospital Locator</div>
+            <div class="card-sub">Search any city in the world — or pick from the curated list below</div>
           </div>
-          <div class="city-select-wrap">
-            <span class="city-label">📍 City:</span>
-            <select class="city-select" id="citySelect" onchange="updateMap()">
-              <option value="">— Choose City —</option>
-              <optgroup label="Maharashtra">
-                <option value="Jalgaon, Maharashtra">Jalgaon</option>
-                <option value="Mumbai, Maharashtra">Mumbai</option>
-                <option value="Pune, Maharashtra">Pune</option>
-                <option value="Nagpur, Maharashtra">Nagpur</option>
-                <option value="Nashik, Maharashtra">Nashik</option>
-                <option value="Aurangabad, Maharashtra">Aurangabad</option>
+        </div>
+
+        <div style="padding:0 22px 16px;display:flex;flex-direction:column;gap:10px;">
+
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:15px;flex-shrink:0;">🔍</span>
+            <input
+              id="citySearch"
+              type="text"
+              placeholder="Type any city in the world… e.g. New York, Tokyo, Cairo"
+              class="api-input"
+              style="flex:1;"
+              onkeydown="if(event.key==='Enter') searchCity()"
+            />
+            <button class="btn-ghost" onclick="searchCity()" style="white-space:nowrap;">
+              Search
+            </button>
+            <button class="btn-ghost" onclick="clearMap()" title="Clear map" style="padding:7px 10px;">✕</button>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="flex:1;height:1px;background:var(--border);"></div>
+            <span style="font-size:11px;color:var(--text-4);font-weight:500;">OR BROWSE BY REGION</span>
+            <div style="flex:1;height:1px;background:var(--border);"></div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:13px;color:var(--text-3);flex-shrink:0;">📍 Quick select:</span>
+            <select class="city-select" id="citySelect" onchange="selectFromDropdown()"
+              style="flex:1;min-width:200px;">
+              <option value="">— Browse regions —</option>
+
+              <optgroup label="🇮🇳 India — Maharashtra">
+                <option value="Jalgaon, Maharashtra, India">Jalgaon</option>
+                <option value="Mumbai, Maharashtra, India">Mumbai</option>
+                <option value="Pune, Maharashtra, India">Pune</option>
+                <option value="Nagpur, Maharashtra, India">Nagpur</option>
+                <option value="Nashik, Maharashtra, India">Nashik</option>
+                <option value="Aurangabad, Maharashtra, India">Chhatrapati Sambhajinagar (Aurangabad)</option>
+                <option value="Solapur, Maharashtra, India">Solapur</option>
+                <option value="Kolhapur, Maharashtra, India">Kolhapur</option>
+                <option value="Thane, Maharashtra, India">Thane</option>
+                <option value="Nanded, Maharashtra, India">Nanded</option>
               </optgroup>
-              <optgroup label="Other Cities">
-                <option value="Delhi, India">Delhi</option>
-                <option value="Bangalore, Karnataka">Bangalore</option>
-                <option value="Hyderabad, Telangana">Hyderabad</option>
-                <option value="Chennai, Tamil Nadu">Chennai</option>
-                <option value="Kolkata, West Bengal">Kolkata</option>
+
+              <optgroup label="🇮🇳 India — North">
+                <option value="Delhi, India">New Delhi</option>
+                <option value="Gurugram, Haryana, India">Gurugram (Gurgaon)</option>
+                <option value="Noida, Uttar Pradesh, India">Noida</option>
+                <option value="Lucknow, Uttar Pradesh, India">Lucknow</option>
+                <option value="Kanpur, Uttar Pradesh, India">Kanpur</option>
+                <option value="Varanasi, Uttar Pradesh, India">Varanasi</option>
+                <option value="Agra, Uttar Pradesh, India">Agra</option>
+                <option value="Jaipur, Rajasthan, India">Jaipur</option>
+                <option value="Jodhpur, Rajasthan, India">Jodhpur</option>
+                <option value="Udaipur, Rajasthan, India">Udaipur</option>
+                <option value="Chandigarh, India">Chandigarh</option>
+                <option value="Amritsar, Punjab, India">Amritsar</option>
+                <option value="Ludhiana, Punjab, India">Ludhiana</option>
+                <option value="Shimla, Himachal Pradesh, India">Shimla</option>
+                <option value="Dehradun, Uttarakhand, India">Dehradun</option>
+                <option value="Jammu, India">Jammu</option>
+                <option value="Srinagar, Jammu and Kashmir, India">Srinagar</option>
               </optgroup>
+
+              <optgroup label="🇮🇳 India — South">
+                <option value="Bangalore, Karnataka, India">Bengaluru (Bangalore)</option>
+                <option value="Mysore, Karnataka, India">Mysuru (Mysore)</option>
+                <option value="Mangalore, Karnataka, India">Mangaluru</option>
+                <option value="Hyderabad, Telangana, India">Hyderabad</option>
+                <option value="Warangal, Telangana, India">Warangal</option>
+                <option value="Chennai, Tamil Nadu, India">Chennai</option>
+                <option value="Coimbatore, Tamil Nadu, India">Coimbatore</option>
+                <option value="Madurai, Tamil Nadu, India">Madurai</option>
+                <option value="Tiruchirappalli, Tamil Nadu, India">Tiruchirappalli</option>
+                <option value="Kochi, Kerala, India">Kochi</option>
+                <option value="Thiruvananthapuram, Kerala, India">Thiruvananthapuram</option>
+                <option value="Kozhikode, Kerala, India">Kozhikode</option>
+                <option value="Visakhapatnam, Andhra Pradesh, India">Visakhapatnam</option>
+                <option value="Vijayawada, Andhra Pradesh, India">Vijayawada</option>
+              </optgroup>
+
+              <optgroup label="🇮🇳 India — East & Northeast">
+                <option value="Kolkata, West Bengal, India">Kolkata</option>
+                <option value="Bhubaneswar, Odisha, India">Bhubaneswar</option>
+                <option value="Cuttack, Odisha, India">Cuttack</option>
+                <option value="Patna, Bihar, India">Patna</option>
+                <option value="Ranchi, Jharkhand, India">Ranchi</option>
+                <option value="Guwahati, Assam, India">Guwahati</option>
+                <option value="Siliguri, West Bengal, India">Siliguri</option>
+              </optgroup>
+
+              <optgroup label="🇮🇳 India — West & Central">
+                <option value="Ahmedabad, Gujarat, India">Ahmedabad</option>
+                <option value="Surat, Gujarat, India">Surat</option>
+                <option value="Vadodara, Gujarat, India">Vadodara</option>
+                <option value="Rajkot, Gujarat, India">Rajkot</option>
+                <option value="Bhopal, Madhya Pradesh, India">Bhopal</option>
+                <option value="Indore, Madhya Pradesh, India">Indore</option>
+                <option value="Jabalpur, Madhya Pradesh, India">Jabalpur</option>
+                <option value="Gwalior, Madhya Pradesh, India">Gwalior</option>
+                <option value="Raipur, Chhattisgarh, India">Raipur</option>
+                <option value="Goa, India">Goa (Panaji)</option>
+              </optgroup>
+
+              <optgroup label="🇺🇸 United States">
+                <option value="New York City, New York, USA">New York City</option>
+                <option value="Los Angeles, California, USA">Los Angeles</option>
+                <option value="Chicago, Illinois, USA">Chicago</option>
+                <option value="Houston, Texas, USA">Houston</option>
+                <option value="Phoenix, Arizona, USA">Phoenix</option>
+                <option value="Philadelphia, Pennsylvania, USA">Philadelphia</option>
+                <option value="San Antonio, Texas, USA">San Antonio</option>
+                <option value="San Diego, California, USA">San Diego</option>
+                <option value="Dallas, Texas, USA">Dallas</option>
+                <option value="San Francisco, California, USA">San Francisco</option>
+                <option value="Seattle, Washington, USA">Seattle</option>
+                <option value="Boston, Massachusetts, USA">Boston</option>
+                <option value="Miami, Florida, USA">Miami</option>
+                <option value="Atlanta, Georgia, USA">Atlanta</option>
+                <option value="Denver, Colorado, USA">Denver</option>
+                <option value="Minneapolis, Minnesota, USA">Minneapolis</option>
+                <option value="Portland, Oregon, USA">Portland</option>
+                <option value="Las Vegas, Nevada, USA">Las Vegas</option>
+              </optgroup>
+
+              <optgroup label="🇬🇧 United Kingdom">
+                <option value="London, United Kingdom">London</option>
+                <option value="Manchester, United Kingdom">Manchester</option>
+                <option value="Birmingham, United Kingdom">Birmingham</option>
+                <option value="Glasgow, Scotland, United Kingdom">Glasgow</option>
+                <option value="Edinburgh, Scotland, United Kingdom">Edinburgh</option>
+                <option value="Leeds, United Kingdom">Leeds</option>
+                <option value="Bristol, United Kingdom">Bristol</option>
+                <option value="Liverpool, United Kingdom">Liverpool</option>
+                <option value="Cardiff, Wales, United Kingdom">Cardiff</option>
+                <option value="Belfast, Northern Ireland, United Kingdom">Belfast</option>
+              </optgroup>
+
+              <optgroup label="🇦🇺 Australia & New Zealand">
+                <option value="Sydney, New South Wales, Australia">Sydney</option>
+                <option value="Melbourne, Victoria, Australia">Melbourne</option>
+                <option value="Brisbane, Queensland, Australia">Brisbane</option>
+                <option value="Perth, Western Australia, Australia">Perth</option>
+                <option value="Adelaide, South Australia, Australia">Adelaide</option>
+                <option value="Canberra, Australian Capital Territory, Australia">Canberra</option>
+                <option value="Auckland, New Zealand">Auckland</option>
+                <option value="Wellington, New Zealand">Wellington</option>
+                <option value="Christchurch, New Zealand">Christchurch</option>
+              </optgroup>
+
+              <optgroup label="🇨🇦 Canada">
+                <option value="Toronto, Ontario, Canada">Toronto</option>
+                <option value="Montreal, Quebec, Canada">Montréal</option>
+                <option value="Vancouver, British Columbia, Canada">Vancouver</option>
+                <option value="Calgary, Alberta, Canada">Calgary</option>
+                <option value="Edmonton, Alberta, Canada">Edmonton</option>
+                <option value="Ottawa, Ontario, Canada">Ottawa</option>
+                <option value="Winnipeg, Manitoba, Canada">Winnipeg</option>
+                <option value="Quebec City, Quebec, Canada">Québec City</option>
+              </optgroup>
+
+              <optgroup label="🇩🇪 Germany">
+                <option value="Berlin, Germany">Berlin</option>
+                <option value="Munich, Germany">Munich (München)</option>
+                <option value="Hamburg, Germany">Hamburg</option>
+                <option value="Frankfurt, Germany">Frankfurt</option>
+                <option value="Cologne, Germany">Cologne (Köln)</option>
+                <option value="Stuttgart, Germany">Stuttgart</option>
+                <option value="Düsseldorf, Germany">Düsseldorf</option>
+                <option value="Leipzig, Germany">Leipzig</option>
+              </optgroup>
+
+              <optgroup label="🇫🇷 France">
+                <option value="Paris, France">Paris</option>
+                <option value="Lyon, France">Lyon</option>
+                <option value="Marseille, France">Marseille</option>
+                <option value="Toulouse, France">Toulouse</option>
+                <option value="Nice, France">Nice</option>
+                <option value="Bordeaux, France">Bordeaux</option>
+                <option value="Strasbourg, France">Strasbourg</option>
+              </optgroup>
+
+              <optgroup label="🌍 Europe — Other">
+                <option value="Madrid, Spain">Madrid</option>
+                <option value="Barcelona, Spain">Barcelona</option>
+                <option value="Seville, Spain">Seville</option>
+                <option value="Rome, Italy">Rome</option>
+                <option value="Milan, Italy">Milan</option>
+                <option value="Naples, Italy">Naples</option>
+                <option value="Amsterdam, Netherlands">Amsterdam</option>
+                <option value="Rotterdam, Netherlands">Rotterdam</option>
+                <option value="Brussels, Belgium">Brussels</option>
+                <option value="Vienna, Austria">Vienna</option>
+                <option value="Zurich, Switzerland">Zurich</option>
+                <option value="Geneva, Switzerland">Geneva</option>
+                <option value="Stockholm, Sweden">Stockholm</option>
+                <option value="Oslo, Norway">Oslo</option>
+                <option value="Copenhagen, Denmark">Copenhagen</option>
+                <option value="Helsinki, Finland">Helsinki</option>
+                <option value="Warsaw, Poland">Warsaw</option>
+                <option value="Krakow, Poland">Kraków</option>
+                <option value="Prague, Czech Republic">Prague</option>
+                <option value="Budapest, Hungary">Budapest</option>
+                <option value="Bucharest, Romania">Bucharest</option>
+                <option value="Athens, Greece">Athens</option>
+                <option value="Lisbon, Portugal">Lisbon</option>
+                <option value="Dublin, Ireland">Dublin</option>
+                <option value="Kyiv, Ukraine">Kyiv</option>
+                <option value="Moscow, Russia">Moscow</option>
+                <option value="Saint Petersburg, Russia">Saint Petersburg</option>
+              </optgroup>
+
+              <optgroup label="🇨🇳 China">
+                <option value="Beijing, China">Beijing</option>
+                <option value="Shanghai, China">Shanghai</option>
+                <option value="Guangzhou, China">Guangzhou</option>
+                <option value="Shenzhen, China">Shenzhen</option>
+                <option value="Chengdu, China">Chengdu</option>
+                <option value="Wuhan, China">Wuhan</option>
+                <option value="Xi'an, China">Xi'an</option>
+                <option value="Hangzhou, China">Hangzhou</option>
+                <option value="Chongqing, China">Chongqing</option>
+                <option value="Tianjin, China">Tianjin</option>
+                <option value="Nanjing, China">Nanjing</option>
+                <option value="Hong Kong">Hong Kong</option>
+              </optgroup>
+
+              <optgroup label="🇯🇵 Japan & South Korea">
+                <option value="Tokyo, Japan">Tokyo</option>
+                <option value="Osaka, Japan">Osaka</option>
+                <option value="Kyoto, Japan">Kyoto</option>
+                <option value="Nagoya, Japan">Nagoya</option>
+                <option value="Sapporo, Japan">Sapporo</option>
+                <option value="Fukuoka, Japan">Fukuoka</option>
+                <option value="Seoul, South Korea">Seoul</option>
+                <option value="Busan, South Korea">Busan</option>
+                <option value="Incheon, South Korea">Incheon</option>
+              </optgroup>
+
+              <optgroup label="🌏 Southeast Asia">
+                <option value="Singapore">Singapore</option>
+                <option value="Bangkok, Thailand">Bangkok</option>
+                <option value="Chiang Mai, Thailand">Chiang Mai</option>
+                <option value="Kuala Lumpur, Malaysia">Kuala Lumpur</option>
+                <option value="Jakarta, Indonesia">Jakarta</option>
+                <option value="Surabaya, Indonesia">Surabaya</option>
+                <option value="Manila, Philippines">Manila</option>
+                <option value="Cebu, Philippines">Cebu</option>
+                <option value="Ho Chi Minh City, Vietnam">Ho Chi Minh City</option>
+                <option value="Hanoi, Vietnam">Hanoi</option>
+                <option value="Yangon, Myanmar">Yangon</option>
+                <option value="Phnom Penh, Cambodia">Phnom Penh</option>
+                <option value="Dhaka, Bangladesh">Dhaka</option>
+                <option value="Colombo, Sri Lanka">Colombo</option>
+                <option value="Kathmandu, Nepal">Kathmandu</option>
+              </optgroup>
+
+              <optgroup label="🇵🇰 Pakistan & Afghanistan">
+                <option value="Karachi, Pakistan">Karachi</option>
+                <option value="Lahore, Pakistan">Lahore</option>
+                <option value="Islamabad, Pakistan">Islamabad</option>
+                <option value="Peshawar, Pakistan">Peshawar</option>
+                <option value="Kabul, Afghanistan">Kabul</option>
+              </optgroup>
+
+              <optgroup label="🌍 Middle East">
+                <option value="Dubai, UAE">Dubai</option>
+                <option value="Abu Dhabi, UAE">Abu Dhabi</option>
+                <option value="Riyadh, Saudi Arabia">Riyadh</option>
+                <option value="Jeddah, Saudi Arabia">Jeddah</option>
+                <option value="Mecca, Saudi Arabia">Mecca</option>
+                <option value="Doha, Qatar">Doha</option>
+                <option value="Kuwait City, Kuwait">Kuwait City</option>
+                <option value="Muscat, Oman">Muscat</option>
+                <option value="Manama, Bahrain">Manama</option>
+                <option value="Amman, Jordan">Amman</option>
+                <option value="Beirut, Lebanon">Beirut</option>
+                <option value="Tehran, Iran">Tehran</option>
+                <option value="Baghdad, Iraq">Baghdad</option>
+                <option value="Tel Aviv, Israel">Tel Aviv</option>
+                <option value="Jerusalem, Israel">Jerusalem</option>
+                <option value="Istanbul, Turkey">Istanbul</option>
+                <option value="Ankara, Turkey">Ankara</option>
+                <option value="Izmir, Turkey">İzmir</option>
+              </optgroup>
+
+              <optgroup label="🌍 Africa — North">
+                <option value="Cairo, Egypt">Cairo</option>
+                <option value="Alexandria, Egypt">Alexandria</option>
+                <option value="Casablanca, Morocco">Casablanca</option>
+                <option value="Rabat, Morocco">Rabat</option>
+                <option value="Tunis, Tunisia">Tunis</option>
+                <option value="Algiers, Algeria">Algiers</option>
+                <option value="Tripoli, Libya">Tripoli</option>
+                <option value="Khartoum, Sudan">Khartoum</option>
+              </optgroup>
+
+              <optgroup label="🌍 Africa — Sub-Saharan">
+                <option value="Lagos, Nigeria">Lagos</option>
+                <option value="Abuja, Nigeria">Abuja</option>
+                <option value="Nairobi, Kenya">Nairobi</option>
+                <option value="Johannesburg, South Africa">Johannesburg</option>
+                <option value="Cape Town, South Africa">Cape Town</option>
+                <option value="Durban, South Africa">Durban</option>
+                <option value="Pretoria, South Africa">Pretoria</option>
+                <option value="Accra, Ghana">Accra</option>
+                <option value="Addis Ababa, Ethiopia">Addis Ababa</option>
+                <option value="Dar es Salaam, Tanzania">Dar es Salaam</option>
+                <option value="Kampala, Uganda">Kampala</option>
+                <option value="Kinshasa, Democratic Republic of Congo">Kinshasa</option>
+                <option value="Luanda, Angola">Luanda</option>
+                <option value="Dakar, Senegal">Dakar</option>
+              </optgroup>
+
+              <optgroup label="🌎 Latin America — South America">
+                <option value="São Paulo, Brazil">São Paulo</option>
+                <option value="Rio de Janeiro, Brazil">Rio de Janeiro</option>
+                <option value="Brasília, Brazil">Brasília</option>
+                <option value="Salvador, Brazil">Salvador</option>
+                <option value="Fortaleza, Brazil">Fortaleza</option>
+                <option value="Buenos Aires, Argentina">Buenos Aires</option>
+                <option value="Córdoba, Argentina">Córdoba</option>
+                <option value="Santiago, Chile">Santiago</option>
+                <option value="Lima, Peru">Lima</option>
+                <option value="Bogotá, Colombia">Bogotá</option>
+                <option value="Medellín, Colombia">Medellín</option>
+                <option value="Caracas, Venezuela">Caracas</option>
+                <option value="Quito, Ecuador">Quito</option>
+                <option value="La Paz, Bolivia">La Paz</option>
+                <option value="Asuncion, Paraguay">Asunción</option>
+                <option value="Montevideo, Uruguay">Montevideo</option>
+              </optgroup>
+
+              <optgroup label="🌎 Latin America — Central & Mexico">
+                <option value="Mexico City, Mexico">Mexico City</option>
+                <option value="Guadalajara, Mexico">Guadalajara</option>
+                <option value="Monterrey, Mexico">Monterrey</option>
+                <option value="Cancun, Mexico">Cancún</option>
+                <option value="Guatemala City, Guatemala">Guatemala City</option>
+                <option value="San José, Costa Rica">San José, Costa Rica</option>
+                <option value="Panama City, Panama">Panama City</option>
+                <option value="Havana, Cuba">Havana</option>
+                <option value="Santo Domingo, Dominican Republic">Santo Domingo</option>
+                <option value="San Juan, Puerto Rico">San Juan, Puerto Rico</option>
+              </optgroup>
+
+              <optgroup label="🌏 Central Asia & Caucasus">
+                <option value="Tashkent, Uzbekistan">Tashkent</option>
+                <option value="Almaty, Kazakhstan">Almaty</option>
+                <option value="Nur-Sultan, Kazakhstan">Astana (Nur-Sultan)</option>
+                <option value="Baku, Azerbaijan">Baku</option>
+                <option value="Tbilisi, Georgia">Tbilisi</option>
+                <option value="Yerevan, Armenia">Yerevan</option>
+              </optgroup>
+
             </select>
           </div>
         </div>
 
-        <!-- Map frame — updated dynamically -->
         <div class="map-frame-wrap">
           <div id="mapPlaceholder" style="
-            height:340px; display:flex; flex-direction:column;
-            align-items:center; justify-content:center; gap:10px;
+            height:400px; display:flex; flex-direction:column;
+            align-items:center; justify-content:center; gap:12px;
             background:var(--surface-2); border-top:1px solid var(--border);
           ">
-            <span style="font-size:36px;opacity:0.25;">🗺️</span>
-            <span style="font-size:13px;color:var(--text-3);">Select a city above to load the hospital map</span>
+            <span style="font-size:40px;opacity:0.2;">🗺️</span>
+            <span style="font-size:13.5px;font-weight:500;color:var(--text-2);">
+              Search any city or select from the list above
+            </span>
+            <span style="font-size:12px;color:var(--text-3);">
+              Supports every country in the world
+            </span>
           </div>
           <iframe
             id="mapFrame"
-            style="display:none;"
+            style="display:none;height:400px;"
             allowfullscreen=""
             loading="lazy"
             referrerpolicy="no-referrer-when-downgrade">
@@ -1384,22 +1778,18 @@ tr:hover td { background: var(--surface-2); }
 
         <div class="map-caption">
           <span>ℹ️</span>
-          Map shows dermatology &amp; oncology hospitals in the selected city.
-          Always call ahead to confirm appointment availability.
+          Map searches for dermatology & skin cancer hospitals in the entered or selected location.
+          Results are provided by Google Maps. Always call ahead to confirm availability.
         </div>
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════
-         DEVELOPER MODE TRIGGER (bottom of page)
-    ══════════════════════════════════════════════ -->
     <div class="dev-trigger-zone">
       <button class="dev-trigger-btn" id="devTrigger" onclick="toggleDevPanel()" title="Developer Mode">
         ··· developer mode
       </button>
     </div>
 
-    <!-- DEV PANEL (hidden by default) -->
     <div class="dev-panel" id="devPanel">
 
       <div class="dev-panel-header">
@@ -1412,7 +1802,6 @@ tr:hover td { background: var(--surface-2); }
 
       <div class="dev-panel-body">
 
-        <!-- Session stats row -->
         <div class="dev-stats-row">
           <div class="dev-stat">
             <div class="dev-stat-label">Session Scans</div>
@@ -1428,15 +1817,13 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
-        <!-- Live log area -->
         <div class="dev-log-area" id="devLog">
-          <div class="dev-log-line"><span class="log-time">[init]</span> &nbsp;SkinScan AI frontend loaded</div>
-          <div class="dev-log-line"><span class="log-time">[init]</span> &nbsp;localStorage history: <span class="log-ok" id="devHistCount">0</span> records</div>
-          <div class="dev-log-line"><span class="log-time">[info]</span> &nbsp;Backend URL: <span class="log-ok" id="devApiUrl">—</span></div>
-          <div class="dev-log-line"><span class="log-time">[info]</span> &nbsp;Session started: <span class="log-ok" id="devSessionTime">—</span></div>
+          <div class="dev-log-line"><span class="log-time">[init]</span>  SkinScan AI frontend loaded</div>
+          <div class="dev-log-line"><span class="log-time">[init]</span>  localStorage history: <span class="log-ok" id="devHistCount">0</span> records</div>
+          <div class="dev-log-line"><span class="log-time">[info]</span>  Backend URL: <span class="log-ok" id="devApiUrl">—</span></div>
+          <div class="dev-log-line"><span class="log-time">[info]</span>  Session started: <span class="log-ok" id="devSessionTime">—</span></div>
         </div>
 
-        <!-- Quick links to Render and tools -->
         <div>
           <div class="dev-stat-label" style="color:#64748b;margin-bottom:8px;">QUICK LINKS</div>
           <div class="dev-links-row">
@@ -1446,10 +1833,10 @@ tr:hover td { background: var(--surface-2); }
             <a class="dev-link" id="devLogsLink" href="https://dashboard.render.com" target="_blank" rel="noopener">
               📋 Live Logs
             </a>
-            <a class="dev-link" id="devDocsLink" href="https://skinscan-api-herm.onrender.com" target="_blank" rel="noopener">
+            <a class="dev-link" id="devDocsLink" href="http://localhost:8000/docs" target="_blank" rel="noopener">
               📖 FastAPI Docs
             </a>
-            <a class="dev-link" id="devHealthLink" href="https://skinscan-api-herm.onrender.com/health" target="_blank" rel="noopener">
+            <a class="dev-link" id="devHealthLink" href="http://localhost:8000/health" target="_blank" rel="noopener">
               ❤️ Health Check
             </a>
             <a class="dev-link" href="#" onclick="exportDevReport();return false;">
@@ -1466,7 +1853,7 @@ tr:hover td { background: var(--surface-2); }
 
 <script>
 /* ── Config ──────────────────────────────────── */
-const DEFAULT_URL = localStorage.getItem('apiUrl') || 'https://skinscan-api-herm.onrender.com';
+const DEFAULT_URL = localStorage.getItem('apiUrl') || 'http://localhost:8000';
 document.getElementById('apiUrl').value = DEFAULT_URL;
 
 let currentFile = null;
@@ -1718,22 +2105,56 @@ renderHistory();
 /* ══════════════════════════════════════════════════
    HOSPITAL LOCATOR MAP
 ══════════════════════════════════════════════════ */
-function updateMap() {
-  const city  = document.getElementById('citySelect').value;
+function loadMap(locationQuery, displayName) {
   const frame = document.getElementById('mapFrame');
   const ph    = document.getElementById('mapPlaceholder');
 
-  if (!city) {
-    frame.style.display = 'none';
-    ph.style.display    = 'flex';
+  if (!locationQuery) {
+    clearMap();
     return;
   }
 
-  const query = encodeURIComponent('skin cancer dermatologist hospital in ' + city);
-  frame.src   = 'https://maps.google.com/maps?q=' + query + '&output=embed&z=13';
+  // Safe Google Maps Embed trick with query encoding
+  const query = encodeURIComponent('dermatologist hospital skin clinic in ' + locationQuery);
+  frame.src   = 'https://maps.google.com/maps?q=' + query + '&t=&z=13&ie=UTF8&iwloc=&output=embed';
+  
   ph.style.display    = 'none';
   frame.style.display = 'block';
-  toast('📍 Loading hospitals in ' + city.split(',')[0] + '…', 'success');
+  toast('📍 Loading hospitals near ' + displayName + '…', 'success');
+}
+
+function searchCity() {
+  const input = document.getElementById('citySearch');
+  const val = input.value.trim();
+  if(val !== "") {
+     // Reset dropdown if searching via text
+     document.getElementById('citySelect').value = "";
+     loadMap(val, val);
+  } else {
+     toast('⚠️ Please enter a city name to search.', 'error');
+  }
+}
+
+function selectFromDropdown() {
+  const select = document.getElementById('citySelect');
+  const val = select.value;
+  if(val !== "") {
+     // Reset search input if picking from dropdown
+     document.getElementById('citySearch').value = "";
+     // Extract a short display name (the part before the first comma)
+     const displayName = val.split(',')[0];
+     loadMap(val, displayName);
+  } else {
+     clearMap();
+  }
+}
+
+function clearMap() {
+  document.getElementById('citySearch').value = "";
+  document.getElementById('citySelect').value = "";
+  document.getElementById('mapFrame').style.display = 'none';
+  document.getElementById('mapFrame').src = '';
+  document.getElementById('mapPlaceholder').style.display = 'flex';
 }
 
 /* ══════════════════════════════════════════════════
@@ -1789,7 +2210,7 @@ function addDevLog(msg, type) {
   const time = new Date().toLocaleTimeString('en-IN', { hour12: false });
   const line = document.createElement('div');
   line.className = 'dev-log-line';
-  line.innerHTML = '<span class="log-time">[' + time + ']</span>&nbsp; ' +
+  line.innerHTML = '<span class="log-time">[' + time + ']</span>  ' +
                    '<span class="log-' + type + '">' + msg + '</span>';
   log.appendChild(line);
   log.scrollTop = log.scrollHeight;
@@ -1861,6 +2282,505 @@ runAnalysis = async function() {
     showVeil(false);
   }
 };
+
+/* ════════════════════════════════════════════════════════════════════════
+   FEATURE 1: MOBILE CAMERA CAPTURE
+   ════════════════════════════════════════════════════════════════════════ */
+/* Opens the hidden camera-only input (separate from gallery fileInput) */
+function openCamera() {
+  document.getElementById('cameraInput').click();
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   FEATURE 2: REGIONAL LANGUAGE TOGGLE — English / Hindi / Marathi
+   ════════════════════════════════════════════════════════════════════════ */
+const i18n = {
+  /* key : { en, hi, mr } */
+  analyze        : { en:'🧬 Run AI Analysis',       hi:'🧬 AI विश्लेषण चलाएं',      mr:'🧬 AI विश्लेषण चालवा'       },
+  open_camera    : { en:'Open Camera',              hi:'कैमरा खोलें',               mr:'कॅमेरा उघडा'                },
+  upload_image   : { en:'Drop image here or browse files',
+                     hi:'यहाँ छवि छोड़ें या फ़ाइलें ब्राउज़ करें',
+                     mr:'येथे प्रतिमा टाका किंवा फाइल्स ब्राउझ करा'                                               },
+  upload_hint    : { en:'Maximum file size: 10 MB', hi:'अधिकतम फ़ाइल आकार: 10 MB',  mr:'जास्तीत जास्त फाइल आकार: 10 MB' },
+  prediction     : { en:'Prediction',               hi:'पूर्वानुमान',               mr:'अंदाज'                      },
+  confidence     : { en:'Confidence Score',         hi:'विश्वास स्कोर',             mr:'विश्वास गुण'                },
+  risk_level     : { en:'Risk Level',               hi:'जोखिम स्तर',               mr:'धोका पातळी'                 },
+  high_risk      : { en:'🔴 HIGH RISK',             hi:'🔴 उच्च जोखिम',             mr:'🔴 उच्च धोका'               },
+  medium_risk    : { en:'🟡 MODERATE RISK',         hi:'🟡 मध्यम जोखिम',            mr:'🟡 मध्यम धोका'              },
+  low_risk       : { en:'🟢 LOW RISK',              hi:'🟢 कम जोखिम',               mr:'🟢 कमी धोका'                },
+  precautions    : { en:'🛡️ Prevention & Care',     hi:'🛡️ रोकथाम और देखभाल',       mr:'🛡️ प्रतिबंध आणि काळजी'     },
+  hospital_locator:{ en:'🏥 Find a Dermatologist Near You',
+                     hi:'🏥 अपने पास एक त्वचा विशेषज्ञ खोजें',
+                     mr:'🏥 तुमच्या जवळ त्वचारोगतज्ज्ञ शोधा'                                                      },
+  clear          : { en:'Clear',                    hi:'साफ करें',                  mr:'साफ करा'                    },
+  scan_history   : { en:'🕓 Recent Scan History',   hi:'🕓 हाल की स्कैन इतिहास',     mr:'🕓 अलीकडील स्कॅन इतिहास'  },
+  p_benign       : { en:'P(Benign)',                hi:'P(सौम्य)',                  mr:'P(सौम्य)'                   },
+  p_malignant    : { en:'P(Malignant)',              hi:'P(घातक)',                   mr:'P(घातक)'                    },
+  rec_action     : { en:'Recommended Action',       hi:'अनुशंसित कार्रवाई',         mr:'शिफारस केलेली कृती'         },
+};
+
+/**
+ * changeLanguage(lang)
+ * Loops through every element with data-i18n="key" and updates its text.
+ * @param {string} lang — 'en' | 'hi' | 'mr'
+ */
+function changeLanguage(lang) {
+  localStorage.setItem('skinscan_lang', lang);
+  document.documentElement.lang = lang;
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (i18n[key] && i18n[key][lang]) {
+      el.textContent = i18n[key][lang];
+    }
+  });
+
+  /* Update the upload-zone drop-title separately as it contains an <a> tag */
+  const dropTitle = document.querySelector('.drop-title');
+  if (dropTitle) {
+    const map = {
+      en: 'Drop image here or <a>browse files</a>',
+      hi: 'यहाँ छवि छोड़ें या <a>फ़ाइलें ब्राउज़ करें</a>',
+      mr: 'येथे प्रतिमा टाका किंवा <a>फाइल्स ब्राउझ करा</a>',
+    };
+    dropTitle.innerHTML = map[lang] || map.en;
+  }
+}
+
+/* Restore saved language on load */
+(function() {
+  const saved = localStorage.getItem('skinscan_lang') || 'en';
+  const sel   = document.getElementById('langSelect');
+  if (sel) sel.value = saved;
+  if (saved !== 'en') changeLanguage(saved);
+})();
+
+/* ════════════════════════════════════════════════════════════════════════
+   FEATURE 3: PDF DOWNLOAD — show/hide pdfBtn with dlBtn
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Patch displayResult to also show pdfBtn */
+const _origDisplay = displayResult;
+displayResult = function(data) {
+  _origDisplay(data);
+  const pb = document.getElementById('pdfBtn');
+  if (pb) pb.style.display = 'inline-flex';
+};
+
+/* Patch resetResult to also hide pdfBtn */
+const _origReset = resetResult;
+resetResult = function() {
+  _origReset();
+  const pb = document.getElementById('pdfBtn');
+  if (pb) pb.style.display = 'none';
+};
+
+/**
+ * downloadPDFReport()
+ * Populates the hidden template with live data and renders to PDF via html2pdf.js
+ */
+function downloadPDFReport() {
+  if (!lastReport) {
+    toast('⚠️ Run an analysis first to generate a PDF report.', 'error');
+    return;
+  }
+
+  const d         = lastReport;
+  const now       = d.timestamp ? new Date(d.timestamp) : new Date();
+  const dateStr   = now.toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' });
+  const timeStr   = now.toLocaleTimeString('en-IN', { hour12: true });
+  const scanId    = d.scan_id || 'N/A';
+  const isMal     = d.prediction === 'Malignant';
+  const isHigh    = d.risk_level === 'HIGH';
+  const isMed     = d.risk_level === 'MEDIUM';
+  const conf      = +(d.confidence || 0);
+
+  /* ── Populate metadata ── */
+  document.getElementById('pdfreport-id').textContent    = 'Report ID: ' + scanId;
+  document.getElementById('pdf-patient-id').textContent  = 'ANON-' + scanId;
+  document.getElementById('pdf-scan-date').textContent   = dateStr;
+  document.getElementById('pdf-scan-time').textContent   = timeStr;
+  document.getElementById('pdf-filename').textContent    = d.filename || (currentFile && currentFile.name) || '—';
+  document.getElementById('pdf-infer-ms').textContent    = d.inference_ms ? d.inference_ms + ' ms' : '—';
+  document.getElementById('pdf-footer-ts').textContent   = 'Generated: ' + dateStr + ' ' + timeStr;
+
+  /* ── Verdict banner colour ── */
+  const banner = document.getElementById('pdf-verdict-banner');
+  if (isMal && isHigh) {
+    banner.style.background = '#fff5f5'; banner.style.borderColor = '#fed7d7';
+    document.getElementById('pdf-prediction').style.color = '#e53e3e';
+  } else if (isMed) {
+    banner.style.background = '#fffbeb'; banner.style.borderColor = '#fde68a';
+    document.getElementById('pdf-prediction').style.color = '#c97316';
+  } else {
+    banner.style.background = '#f0fdf6'; banner.style.borderColor = '#bbf7d4';
+    document.getElementById('pdf-prediction').style.color = '#1a9e5c';
+  }
+  document.getElementById('pdf-verdict-emoji').textContent = isMal ? (isMed ? '⚠️' : '🔴') : '🟢';
+  document.getElementById('pdf-prediction').textContent    = d.prediction || '—';
+  document.getElementById('pdf-risk-badge').textContent    = d.risk_badge  || '';
+
+  /* ── Confidence bar ── */
+  document.getElementById('pdf-confidence').textContent   = conf.toFixed(1) + '%';
+  const cbar = document.getElementById('pdf-conf-bar');
+  cbar.style.width      = conf + '%';
+  cbar.style.background = isHigh ? '#e53e3e' : isMed ? '#c97316' : '#1a9e5c';
+
+  /* ── Probabilities ── */
+  document.getElementById('pdf-p-benign').textContent    = (+(d.p_benign    || 0)).toFixed(1) + '%';
+  document.getElementById('pdf-p-malignant').textContent = (+(d.p_malignant || 0)).toFixed(1) + '%';
+
+  /* ── Action ── */
+  document.getElementById('pdf-action').textContent = d.recommended_action || '—';
+
+  /* ── Show wrapper briefly for html2pdf capture ── */
+  const wrap = document.getElementById('pdfReportWrap');
+  wrap.style.display = 'block';
+
+  const opt = {
+    margin      : [8, 8, 8, 8],
+    filename    : 'SkinScan_Diagnosis_' + scanId + '.pdf',
+    image       : { type: 'jpeg', quality: 0.95 },
+    html2canvas : { scale: 2, useCORS: true, logging: false },
+    jsPDF       : { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak   : { mode: ['avoid-all', 'css', 'legacy'] },
+  };
+
+  html2pdf()
+    .set(opt)
+    .from(document.getElementById('pdfReportContent'))
+    .save()
+    .then(() => {
+      wrap.style.display = 'none';
+      toast('📄 PDF report downloaded!', 'success');
+    })
+    .catch(err => {
+      wrap.style.display = 'none';
+      console.error('[PDF]', err);
+      toast('❌ PDF generation failed: ' + err.message, 'error');
+    });
+}
+
 </script>
-</body>
+
+<div class="lang-fab" title="Switch language">
+  <span class="lang-fab-icon">🌐</span>
+  <select id="langSelect" onchange="changeLanguage(this.value)" aria-label="Select language">
+    <option value="en">English</option>
+    <option value="hi">हिंदी</option>
+    <option value="mr">मराठी</option>
+  </select>
+</div>
+
+<div id="pdfReportWrap">
+  <div id="pdfReportContent" style="
+    width:794px; padding:44px 52px;
+    font-family:Arial,Helvetica,sans-serif; font-size:12px;
+    color:#111827; background:#ffffff; line-height:1.65;
+  ">
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;
+                border-bottom:3px solid #3b6ff0;padding-bottom:16px;margin-bottom:20px;">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:#1f3864;letter-spacing:-0.4px;">
+          🔬 SkinScan AI Diagnostic Report
+        </div>
+        <div style="font-size:11px;color:#6b7280;margin-top:3px;">
+          AI-Assisted Skin Lesion Classification Platform
+        </div>
+        <div style="font-size:10px;color:#9ca3af;margin-top:2px;">
+          KCES's College of Engineering & Management, Jalgaon · Research Use Only
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="background:#eef2fe;border:1px solid rgba(59,111,240,0.25);
+                    border-radius:6px;padding:5px 11px;
+                    font-size:11px;color:#3b6ff0;font-weight:700;">
+          CONFIDENTIAL — RESEARCH
+        </div>
+        <div id="pdfreport-id" style="font-size:10px;color:#9ca3af;margin-top:5px;">Report ID: —</div>
+      </div>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+      <tr>
+        <td style="width:48%;vertical-align:top;padding-right:14px;">
+          <div style="background:#f9fafb;border:1px solid #e4e8ef;border-radius:8px;padding:13px 15px;">
+            <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
+                        text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;">
+              Scan Information
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Patient ID</span>
+                <span style="font-weight:600;" id="pdf-patient-id">ANON-—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Scan Date</span>
+                <span style="font-weight:600;" id="pdf-scan-date">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Scan Time</span>
+                <span style="font-weight:600;" id="pdf-scan-time">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Filename</span>
+                <span style="font-weight:600;max-width:160px;overflow:hidden;
+                             text-overflow:ellipsis;white-space:nowrap;" id="pdf-filename">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Inference</span>
+                <span style="font-weight:600;" id="pdf-infer-ms">—</span>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td style="width:52%;vertical-align:top;">
+          <div style="background:#f9fafb;border:1px solid #e4e8ef;border-radius:8px;padding:13px 15px;">
+            <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
+                        text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;">
+              Model Information
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Architecture</span>
+                <span style="font-weight:600;">MobileNetV2 → TFLite</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Training Dataset</span>
+                <span style="font-weight:600;">HAM10000 (10,015 images)</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Input Resolution</span>
+                <span style="font-weight:600;">224 × 224 px</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Task</span>
+                <span style="font-weight:600;">Binary (Malignant / Benign)</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+                <span style="color:#6b7280;">Model Accuracy</span>
+                <span style="font-weight:600;">≥ 90% (Test set)</span>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div style="margin-bottom:18px;">
+      <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
+                  text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
+        AI Classification Result
+      </div>
+
+      <div id="pdf-verdict-banner" style="border-radius:9px;border:1px solid;
+           padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <span id="pdf-verdict-emoji" style="font-size:26px;">—</span>
+        <div>
+          <div id="pdf-prediction" style="font-size:20px;font-weight:700;letter-spacing:-0.4px;">—</div>
+          <div id="pdf-risk-badge" style="font-size:11.5px;color:#4b5a6e;margin-top:2px;">—</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;">
+          <span style="color:#6b7280;font-weight:500;">Confidence Score</span>
+          <span id="pdf-confidence" style="font-size:16px;font-weight:700;">—</span>
+        </div>
+        <div style="height:7px;background:#f1f4f8;border-radius:4px;
+                    overflow:hidden;border:1px solid #e4e8ef;">
+          <div id="pdf-conf-bar" style="height:100%;border-radius:4px;
+               background:#3b6ff0;width:0%;transition:width 0.8s ease;"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:12px;">
+        <div style="flex:1;padding:10px 12px;background:#f0fdf6;
+                    border:1px solid #bbf7d4;border-radius:7px;">
+          <div style="font-size:9.5px;color:#6b7280;font-weight:600;
+                      text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">P(Benign)</div>
+          <div id="pdf-p-benign" style="font-size:18px;font-weight:700;color:#1a9e5c;">—</div>
+        </div>
+        <div style="flex:1;padding:10px 12px;background:#fff5f5;
+                    border:1px solid #fed7d7;border-radius:7px;">
+          <div style="font-size:9.5px;color:#6b7280;font-weight:600;
+                      text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">P(Malignant)</div>
+          <div id="pdf-p-malignant" style="font-size:18px;font-weight:700;color:#e53e3e;">—</div>
+        </div>
+      </div>
+
+      <div style="padding:11px 13px;background:#eef2fe;
+                  border:1px solid rgba(59,111,240,0.2);border-radius:7px;
+                  font-size:12px;color:#1f3864;">
+        <div style="font-size:9.5px;font-weight:700;color:#3b6ff0;text-transform:uppercase;
+                    letter-spacing:0.5px;margin-bottom:3px;">Recommended Action</div>
+        <span id="pdf-action">—</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
+                  text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
+        📷 Clinical & Photographic Precautions for Accurate AI Analysis
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#1f3864;">
+            <th style="padding:7px 10px;text-align:left;color:#ffffff;
+                       font-size:10px;font-weight:600;width:30%;border:1px solid #c8d9e6;">
+              Precaution Category
+            </th>
+            <th style="padding:7px 10px;text-align:left;color:#ffffff;
+                       font-size:10px;font-weight:600;border:1px solid #c8d9e6;">
+              Clinical Guideline
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#f9fafb;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">💡 Lighting Requirements</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              Use diffuse, even, natural daylight or a ring-light source. Avoid direct flash — it creates specular reflections that saturate the lesion and suppress melanin detail. Indoor fluorescent lighting introduces a green colour cast that degrades colour-based CNN features (Colour in ABCDE criteria).
+            </td>
+          </tr>
+          <tr style="background:#ffffff;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">🔍 Focal Blur Warning</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              Maintain a minimum shooting distance of 5–8 cm with macro focus enabled. Motion blur, camera shake, or depth-of-field defocus causes MobileNetV2's high-frequency texture features (dermoscopic patterns) to degrade. Images with BRISQUE score > 50 should be recaptured before submission.
+            </td>
+          </tr>
+          <tr style="background:#f9fafb;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">🧹 Hair Artefact Removal</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              Body hair creates dark, elongated occluding structures that can be misinterpreted by the CNN as irregular borders (B-criterion) or colour streaks (C-criterion). Gently stretch the skin taut or use transparent surgical tape to flatten hair around the lesion before capture. Future Phase III builds will incorporate automatic DullRazor hair removal preprocessing.
+            </td>
+          </tr>
+          <tr style="background:#ffffff;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">📐 Framing & Centering</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              Centre the lesion within the frame with a 10–15 mm clear margin of surrounding healthy skin visible. Cropped or edge-touching lesions prevent the model from evaluating border irregularity (B-criterion) correctly. The image will be resized to 224×224 px — extreme aspect ratios distort the lesion shape.
+            </td>
+          </tr>
+          <tr style="background:#f9fafb;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">🔄 Multiple Angles</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              Capture 3–5 images at slightly varying angles and select the sharpest, most evenly lit image for upload. Dermoscopic asymmetry can be direction-dependent; multiple views improve the quality of clinical corroboration alongside the AI result.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
+                  text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
+        🚀 Future Enhancements — Phase III Development Roadmap
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#1f3864;">
+            <th style="padding:7px 10px;text-align:left;color:#ffffff;
+                       font-size:10px;font-weight:600;width:30%;border:1px solid #c8d9e6;">
+              Enhancement
+            </th>
+            <th style="padding:7px 10px;text-align:left;color:#ffffff;
+                       font-size:10px;font-weight:600;border:1px solid #c8d9e6;">
+              Technical Description & Clinical Impact
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#f9fafb;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">🧠 Explainable AI (Grad-CAM)</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              Gradient-weighted Class Activation Mapping (Grad-CAM) will generate a heat map overlay on the original image, highlighting the exact pixel regions that drove the malignancy classification. This transforms the model from a "black box" to an interpretable clinical aid, allowing dermatologists to verify whether the AI focused on the actual lesion morphology or artefactual regions.
+            </td>
+          </tr>
+          <tr style="background:#ffffff;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">🔎 Automated Blur Detection</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              A BRISQUE (Blind/Referenceless Image Spatial Quality Evaluator) or Laplacian variance module will automatically assess image sharpness before inference is triggered. Images scoring below an acceptable quality threshold will prompt the user to recapture rather than returning potentially unreliable predictions, improving clinical safety.
+            </td>
+          </tr>
+          <tr style="background:#f9fafb;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">🏥 eSanjeevani Integration</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              Integration with India's national telemedicine network (eSanjeevani OPD) via FHIR-compliant API will enable direct referral workflow: a high-risk SkinScan AI result can auto-populate a telemedicine referral form and schedule a dermatologist teleconsultation, bridging rural screening to specialist care within a single session.
+            </td>
+          </tr>
+          <tr style="background:#ffffff;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">🎯 7-Class Classification</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              Expanding the model output from binary (Malignant/Benign) to all 7 HAM10000 diagnostic categories (MEL, NV, BCC, AKIEC, BKL, DF, VASC) with a softmax output layer. This provides dermatologists with a differential probability distribution across lesion subtypes, significantly enhancing the clinical utility of the AI report.
+            </td>
+          </tr>
+          <tr style="background:#f9fafb;">
+            <td style="padding:7px 10px;font-size:11px;font-weight:600;
+                       border:1px solid #e4e8ef;color:#1f3864;">📊 Longitudinal Tracking</td>
+            <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
+              Firebase Firestore-backed per-patient scan history with timeline visualisation will allow monitoring of lesion evolution over successive scans — directly operationalising the E (Evolving) criterion of ABCDE, which is currently impossible without longitudinal data.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
+                  text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;">
+        ABCDE Clinical Reference
+      </div>
+      <div style="display:flex;gap:6px;">
+        <div style="flex:1;padding:8px 6px;background:#f9fafb;border:1px solid #e4e8ef;
+                    border-radius:6px;text-align:center;font-size:10.5px;">
+          <strong style="color:#3b6ff0;">A</strong><br/>Asymmetry
+        </div>
+        <div style="flex:1;padding:8px 6px;background:#f9fafb;border:1px solid #e4e8ef;
+                    border-radius:6px;text-align:center;font-size:10.5px;">
+          <strong style="color:#3b6ff0;">B</strong><br/>Border
+        </div>
+        <div style="flex:1;padding:8px 6px;background:#f9fafb;border:1px solid #e4e8ef;
+                    border-radius:6px;text-align:center;font-size:10.5px;">
+          <strong style="color:#3b6ff0;">C</strong><br/>Colour
+        </div>
+        <div style="flex:1;padding:8px 6px;background:#f9fafb;border:1px solid #e4e8ef;
+                    border-radius:6px;text-align:center;font-size:10.5px;">
+          <strong style="color:#3b6ff0;">D</strong><br/>Diameter
+        </div>
+        <div style="flex:1;padding:8px 6px;background:#f9fafb;border:1px solid #e4e8ef;
+                    border-radius:6px;text-align:center;font-size:10.5px;">
+          <strong style="color:#3b6ff0;">E</strong><br/>Evolving
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:7px;
+                padding:11px 13px;font-size:10.5px;color:#78350f;line-height:1.6;
+                margin-bottom:14px;">
+      <strong>⚠ MEDICAL DISCLAIMER:</strong> This report is generated by an AI model for
+      <strong>research and educational purposes only</strong>. It does NOT constitute, replace,
+      or supplement a clinical medical diagnosis. All diagnostic and treatment decisions must be
+      made exclusively by a qualified, licensed healthcare professional following direct patient
+      examination and appropriate clinical investigations. If you are concerned about a skin
+      lesion, consult a board-certified dermatologist immediately.
+    </div>
+
+    <div style="border-top:1px solid #e4e8ef;padding-top:11px;
+                display:flex;justify-content:space-between;
+                font-size:10px;color:#9ca3af;align-items:center;">
+      <span>SkinScan AI · KCES's COEM, Jalgaon · Final Year Project 2025–26</span>
+      <span id="pdf-footer-ts">—</span>
+    </div>
+
+  </div></div></body>
 </html>
