@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SkinScan AI — Intelligent Dermatology Platform</title>
 
+<!-- Fonts: Fraunces (display) + Geist (body) -->
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- html2pdf.js — PDF generation library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <style>
@@ -1050,20 +1052,58 @@ tr:hover td { background: var(--surface-2); }
   width: 794px;
 }
 
+/* ═══════════════════════════════════════════════════
+   MOBILE UPLOAD — improved touch targets
+═══════════════════════════════════════════════════ */
+
+/* Make drop zone a better touch target on mobile */
+@media (max-width: 640px) {
+  .drop-zone { min-height: 160px; padding: 24px 16px; cursor: pointer; }
+  .drop-icon-ring { width: 44px; height: 44px; font-size: 20px; }
+  .drop-title { font-size: 13px; }
+  .drop-hint  { font-size: 11.5px; }
+  .btn-camera { font-size: 13px; padding: 10px; }
+  /* Prevent double-tap zoom on buttons on iOS */
+  .btn-primary, .btn-camera, .btn-ghost { touch-action: manipulation; }
+}
+
+/* ── Locator search bar — mobile ──────────────── */
+@media (max-width: 640px) {
+  #citySearch { font-size: 14px; padding: 10px 12px; }
+  .locator-header { gap: 10px; }
+}
+
+/* City search input highlight */
+#citySearch:focus {
+  border-color: var(--blue);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(59,111,240,0.1);
+  outline: none;
+}
+
+/* Map frame responsive height */
+@media (max-width: 640px) {
+  .map-frame-wrap iframe { height: 300px !important; }
+  #mapPlaceholder        { height: 300px !important; }
+}
+
 </style>
 </head>
 <body>
 
+<!-- Loading veil -->
 <div class="veil" id="veil">
   <div class="spinner"></div>
   <div class="veil-text">Analyzing scan…</div>
   <div class="veil-sub">Running TFLite inference on your image</div>
 </div>
 
+<!-- Toast container -->
 <div class="toast-stack" id="toastStack"></div>
 
 <div class="shell">
 
+  <!-- ══ SIDEBAR ══════════════════════════════════ -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-lockup">
@@ -1100,6 +1140,7 @@ tr:hover td { background: var(--surface-2); }
     </div>
   </aside>
 
+  <!-- ══ TOPBAR ═════════════════════════════════ -->
   <header class="topbar">
     <div class="topbar-title">Dashboard <span>/ AI Diagnosis</span></div>
     <div class="topbar-right">
@@ -1109,10 +1150,13 @@ tr:hover td { background: var(--surface-2); }
     </div>
   </header>
 
+  <!-- ══ MAIN CONTENT ════════════════════════════ -->
   <main class="content">
 
+    <!-- Upload + Result -->
     <div class="mid-row">
 
+      <!-- Upload card -->
       <div class="card upload-card fade-up d1">
         <div class="card-header">
           <div>
@@ -1139,7 +1183,8 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
-        <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="onFileChange(event)"/>
+        <!-- Gallery picker — NO capture attr so mobile shows full gallery/camera choice -->
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="onFileChange(event)"/>
 
         <div id="fileRow" style="display:none; align-items:center; gap:10px;">
           <span style="font-size:13px;color:var(--text-2);">📄</span>
@@ -1152,11 +1197,13 @@ tr:hover td { background: var(--surface-2); }
           🧬 <span data-i18n="analyze">Run AI Analysis</span>
         </button>
 
-        <button class="btn-camera" onclick="openCamera()" title="Open camera to take a photo">
+        <!-- Mobile Camera Capture button — launches rear camera directly on mobile -->
+        <button class="btn-camera" onclick="openCamera()" title="Take a photo with your camera">
           📷 <span data-i18n="open_camera">Open Camera</span>
         </button>
+        <!-- Camera-only hidden input: capture="environment" = rear camera on mobile -->
         <input type="file" id="cameraInput" accept="image/*" capture="environment"
-               style="display:none" onchange="onFileChange(event)"/>
+               style="display:none" onchange="onCameraCapture(event)"/>
 
         <div class="api-row">
           <input class="api-input" id="apiUrl" type="text"
@@ -1168,6 +1215,7 @@ tr:hover td { background: var(--surface-2); }
         </div>
       </div>
 
+      <!-- Result panel -->
       <div class="card result-panel fade-up d2">
         <div class="card-header">
           <div>
@@ -1231,6 +1279,7 @@ tr:hover td { background: var(--surface-2); }
       </div>
     </div>
 
+    <!-- Bottom row -->
     <div class="bottom-row">
 
       <div class="card chart-card fade-up d2">
@@ -1276,6 +1325,7 @@ tr:hover td { background: var(--surface-2); }
       </div>
     </div>
 
+    <!-- History table -->
     <div class="card history-card fade-up">
       <div class="card-header" style="margin-bottom:12px;">
         <div class="card-title" data-i18n="scan_history">🕓 Recent Scan History</div>
@@ -1300,14 +1350,18 @@ tr:hover td { background: var(--surface-2); }
       </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════
+         SECTION: HEALTHCARE PRECAUTIONS
+    ══════════════════════════════════════════════ -->
     <div class="fade-up">
       <div class="section-heading">
-        <div class="section-title" data-i18n="precautions">🛡️ Prevention & Care</div>
+        <div class="section-title" data-i18n="precautions">🛡️ Prevention &amp; Care</div>
         <div class="section-sub">Evidence-based skin health guidelines</div>
       </div>
 
       <div class="prevention-grid">
 
+        <!-- Card 1: UV Protection -->
         <div class="prev-card uv">
           <div style="display:flex;align-items:center;gap:12px;">
             <div class="prev-icon-ring">☀️</div>
@@ -1329,6 +1383,7 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
+        <!-- Card 2: ABCDE Mole Check -->
         <div class="prev-card abcde">
           <div style="display:flex;align-items:center;gap:12px;">
             <div class="prev-icon-ring">🔍</div>
@@ -1357,11 +1412,12 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
+        <!-- Card 3: Skin Hydration -->
         <div class="prev-card hydrate">
           <div style="display:flex;align-items:center;gap:12px;">
             <div class="prev-icon-ring">💧</div>
             <div>
-              <div class="prev-card-title">Skin Hydration & Diet</div>
+              <div class="prev-card-title">Skin Hydration &amp; Diet</div>
               <div class="prev-card-desc" style="font-size:11.5px;margin-top:1px;">Nourish your skin from within</div>
             </div>
           </div>
@@ -1381,6 +1437,9 @@ tr:hover td { background: var(--surface-2); }
       </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════
+         SECTION: HOSPITAL LOCATOR MAP
+    ══════════════════════════════════════════════ -->
     <div class="fade-up">
       <div class="section-heading">
         <div class="section-title">🏥 Find a Dermatologist Near You</div>
@@ -1395,8 +1454,10 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
+        <!-- ── Dual-mode search: free-text OR dropdown ───────────────── -->
         <div style="padding:0 22px 16px;display:flex;flex-direction:column;gap:10px;">
 
+          <!-- Free-text search bar -->
           <div style="display:flex;gap:8px;align-items:center;">
             <span style="font-size:15px;flex-shrink:0;">🔍</span>
             <input
@@ -1413,12 +1474,14 @@ tr:hover td { background: var(--surface-2); }
             <button class="btn-ghost" onclick="clearMap()" title="Clear map" style="padding:7px 10px;">✕</button>
           </div>
 
+          <!-- Divider -->
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="flex:1;height:1px;background:var(--border);"></div>
             <span style="font-size:11px;color:var(--text-4);font-weight:500;">OR BROWSE BY REGION</span>
             <div style="flex:1;height:1px;background:var(--border);"></div>
           </div>
 
+          <!-- Curated world dropdown -->
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span style="font-size:13px;color:var(--text-3);flex-shrink:0;">📍 Quick select:</span>
             <select class="city-select" id="citySelect" onchange="selectFromDropdown()"
@@ -1475,7 +1538,7 @@ tr:hover td { background: var(--surface-2); }
                 <option value="Vijayawada, Andhra Pradesh, India">Vijayawada</option>
               </optgroup>
 
-              <optgroup label="🇮🇳 India — East & Northeast">
+              <optgroup label="🇮🇳 India — East &amp; Northeast">
                 <option value="Kolkata, West Bengal, India">Kolkata</option>
                 <option value="Bhubaneswar, Odisha, India">Bhubaneswar</option>
                 <option value="Cuttack, Odisha, India">Cuttack</option>
@@ -1485,7 +1548,7 @@ tr:hover td { background: var(--surface-2); }
                 <option value="Siliguri, West Bengal, India">Siliguri</option>
               </optgroup>
 
-              <optgroup label="🇮🇳 India — West & Central">
+              <optgroup label="🇮🇳 India — West &amp; Central">
                 <option value="Ahmedabad, Gujarat, India">Ahmedabad</option>
                 <option value="Surat, Gujarat, India">Surat</option>
                 <option value="Vadodara, Gujarat, India">Vadodara</option>
@@ -1532,7 +1595,7 @@ tr:hover td { background: var(--surface-2); }
                 <option value="Belfast, Northern Ireland, United Kingdom">Belfast</option>
               </optgroup>
 
-              <optgroup label="🇦🇺 Australia & New Zealand">
+              <optgroup label="🇦🇺 Australia &amp; New Zealand">
                 <option value="Sydney, New South Wales, Australia">Sydney</option>
                 <option value="Melbourne, Victoria, Australia">Melbourne</option>
                 <option value="Brisbane, Queensland, Australia">Brisbane</option>
@@ -1621,7 +1684,7 @@ tr:hover td { background: var(--surface-2); }
                 <option value="Hong Kong">Hong Kong</option>
               </optgroup>
 
-              <optgroup label="🇯🇵 Japan & South Korea">
+              <optgroup label="🇯🇵 Japan &amp; South Korea">
                 <option value="Tokyo, Japan">Tokyo</option>
                 <option value="Osaka, Japan">Osaka</option>
                 <option value="Kyoto, Japan">Kyoto</option>
@@ -1651,7 +1714,7 @@ tr:hover td { background: var(--surface-2); }
                 <option value="Kathmandu, Nepal">Kathmandu</option>
               </optgroup>
 
-              <optgroup label="🇵🇰 Pakistan & Afghanistan">
+              <optgroup label="🇵🇰 Pakistan &amp; Afghanistan">
                 <option value="Karachi, Pakistan">Karachi</option>
                 <option value="Lahore, Pakistan">Lahore</option>
                 <option value="Islamabad, Pakistan">Islamabad</option>
@@ -1727,7 +1790,7 @@ tr:hover td { background: var(--surface-2); }
                 <option value="Montevideo, Uruguay">Montevideo</option>
               </optgroup>
 
-              <optgroup label="🌎 Latin America — Central & Mexico">
+              <optgroup label="🌎 Latin America — Central &amp; Mexico">
                 <option value="Mexico City, Mexico">Mexico City</option>
                 <option value="Guadalajara, Mexico">Guadalajara</option>
                 <option value="Monterrey, Mexico">Monterrey</option>
@@ -1740,7 +1803,7 @@ tr:hover td { background: var(--surface-2); }
                 <option value="San Juan, Puerto Rico">San Juan, Puerto Rico</option>
               </optgroup>
 
-              <optgroup label="🌏 Central Asia & Caucasus">
+              <optgroup label="🌏 Central Asia &amp; Caucasus">
                 <option value="Tashkent, Uzbekistan">Tashkent</option>
                 <option value="Almaty, Kazakhstan">Almaty</option>
                 <option value="Nur-Sultan, Kazakhstan">Astana (Nur-Sultan)</option>
@@ -1753,6 +1816,7 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
+        <!-- Map frame — updated dynamically -->
         <div class="map-frame-wrap">
           <div id="mapPlaceholder" style="
             height:400px; display:flex; flex-direction:column;
@@ -1778,18 +1842,22 @@ tr:hover td { background: var(--surface-2); }
 
         <div class="map-caption">
           <span>ℹ️</span>
-          Map searches for dermatology & skin cancer hospitals in the entered or selected location.
+          Map searches for dermatology &amp; skin cancer hospitals in the entered or selected location.
           Results are provided by Google Maps. Always call ahead to confirm availability.
         </div>
       </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════
+         DEVELOPER MODE TRIGGER (bottom of page)
+    ══════════════════════════════════════════════ -->
     <div class="dev-trigger-zone">
       <button class="dev-trigger-btn" id="devTrigger" onclick="toggleDevPanel()" title="Developer Mode">
         ··· developer mode
       </button>
     </div>
 
+    <!-- DEV PANEL (hidden by default) -->
     <div class="dev-panel" id="devPanel">
 
       <div class="dev-panel-header">
@@ -1802,6 +1870,7 @@ tr:hover td { background: var(--surface-2); }
 
       <div class="dev-panel-body">
 
+        <!-- Session stats row -->
         <div class="dev-stats-row">
           <div class="dev-stat">
             <div class="dev-stat-label">Session Scans</div>
@@ -1817,13 +1886,15 @@ tr:hover td { background: var(--surface-2); }
           </div>
         </div>
 
+        <!-- Live log area -->
         <div class="dev-log-area" id="devLog">
-          <div class="dev-log-line"><span class="log-time">[init]</span>  SkinScan AI frontend loaded</div>
-          <div class="dev-log-line"><span class="log-time">[init]</span>  localStorage history: <span class="log-ok" id="devHistCount">0</span> records</div>
-          <div class="dev-log-line"><span class="log-time">[info]</span>  Backend URL: <span class="log-ok" id="devApiUrl">—</span></div>
-          <div class="dev-log-line"><span class="log-time">[info]</span>  Session started: <span class="log-ok" id="devSessionTime">—</span></div>
+          <div class="dev-log-line"><span class="log-time">[init]</span> &nbsp;SkinScan AI frontend loaded</div>
+          <div class="dev-log-line"><span class="log-time">[init]</span> &nbsp;localStorage history: <span class="log-ok" id="devHistCount">0</span> records</div>
+          <div class="dev-log-line"><span class="log-time">[info]</span> &nbsp;Backend URL: <span class="log-ok" id="devApiUrl">—</span></div>
+          <div class="dev-log-line"><span class="log-time">[info]</span> &nbsp;Session started: <span class="log-ok" id="devSessionTime">—</span></div>
         </div>
 
+        <!-- Quick links to Render and tools -->
         <div>
           <div class="dev-stat-label" style="color:#64748b;margin-bottom:8px;">QUICK LINKS</div>
           <div class="dev-links-row">
@@ -1867,43 +1938,150 @@ const tick = () => {
 };
 setInterval(tick, 1000); tick();
 
-/* ── Drag & Drop ─────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════
+   UPLOAD — Drag & Drop + Gallery Browse + Mobile Camera (mobile-safe)
+   ══════════════════════════════════════════════════════════════════════
+
+   MOBILE BEHAVIOR GUIDE:
+   ─────────────────────────────────────────────────────────────────────
+   • Drop zone tap    → triggerInput() → opens "Choose file" sheet
+                         (iOS/Android shows: Photos Library + Camera option)
+   • "Open Camera" btn→ openCamera()  → cameraInput with capture="environment"
+                         directly launches REAR CAMERA, no gallery
+   • Desktop          → drag-and-drop OR click to browse files
+   ─────────────────────────────────────────────────────────────────────
+*/
+
 const dz = document.getElementById('dropZone');
-dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-dz.addEventListener('drop', e => {
-  e.preventDefault(); dz.classList.remove('drag-over');
-  const f = e.dataTransfer.files[0];
-  if (f && f.type.startsWith('image/')) applyFile(f);
+
+/* ── Desktop: Drag events ───────────────────────── */
+dz.addEventListener('dragover', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  dz.classList.add('drag-over');
 });
 
-function triggerInput() { document.getElementById('fileInput').click(); }
-function onFileChange(e) { const f = e.target.files[0]; if (f) applyFile(f); }
+dz.addEventListener('dragleave', e => {
+  // Only remove if leaving the dropzone itself (not a child)
+  if (!dz.contains(e.relatedTarget)) {
+    dz.classList.remove('drag-over');
+  }
+});
 
-function applyFile(f) {
-  if (f.size > 10 * 1024 * 1024) { toast('❌ File too large (max 10 MB).', 'error'); return; }
-  currentFile = f;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('previewImg').src = ev.target.result;
-    dz.classList.add('has-img');
-  };
-  reader.readAsDataURL(f);
-  const row = document.getElementById('fileRow');
-  row.style.display = 'flex';
-  document.getElementById('fileName').textContent = f.name;
-  document.getElementById('fileSize').textContent = '(' + (f.size/1024).toFixed(1) + ' KB)';
-  document.getElementById('analyzeBtn').disabled = false;
-  resetResult();
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) applyFile(f);
+});
+
+/* ── triggerInput: opens gallery / file picker ────
+   Called when user taps the drop-zone or "Browse".
+   Does NOT have capture="" so mobile shows the
+   full iOS/Android sheet with both Photos + Camera.
+   ─────────────────────────────────────────────── */
+function triggerInput() {
+  // Reset value first so re-selecting same file still fires onchange
+  const inp = document.getElementById('fileInput');
+  inp.value = '';
+  inp.click();
 }
 
+/* ── onFileChange: gallery/browse picker result ── */
+function onFileChange(e) {
+  const f = e.target.files && e.target.files[0];
+  if (f) applyFile(f);
+}
+
+/* ── openCamera: launches REAR camera directly ───
+   Uses a separate <input capture="environment">
+   so iOS/Android skips the picker and goes straight
+   to the native camera viewfinder.
+   ─────────────────────────────────────────────── */
+function openCamera() {
+  const cam = document.getElementById('cameraInput');
+  if (!cam) { toast('❌ Camera input not found.', 'error'); return; }
+  cam.value = '';   // reset so re-capture fires onchange
+  cam.click();
+}
+
+/* ── onCameraCapture: camera input result ─────── */
+function onCameraCapture(e) {
+  const f = e.target.files && e.target.files[0];
+  if (f) applyFile(f);
+}
+
+/* ── applyFile: shared logic for any image source ─
+   Validates size, shows preview, updates UI state.
+   Works for: drag-drop, gallery pick, camera capture.
+   ─────────────────────────────────────────────── */
+function applyFile(f) {
+  // Validate file type
+  if (!f.type.startsWith('image/')) {
+    toast('❌ Please upload an image file (JPG, PNG, WEBP).', 'error');
+    return;
+  }
+  // Validate file size (10 MB)
+  if (f.size > 10 * 1024 * 1024) {
+    toast('❌ File too large. Maximum size is 10 MB.', 'error');
+    return;
+  }
+
+  currentFile = f;
+
+  // Show image preview inside drop zone
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('previewImg');
+    if (img) img.src = ev.target.result;
+    dz.classList.add('has-img');
+  };
+  reader.onerror = () => toast('❌ Could not read image file.', 'error');
+  reader.readAsDataURL(f);
+
+  // Show file info strip
+  const row = document.getElementById('fileRow');
+  if (row) row.style.display = 'flex';
+
+  const nameEl = document.getElementById('fileName');
+  const sizeEl = document.getElementById('fileSize');
+  if (nameEl) nameEl.textContent = f.name;
+  if (sizeEl) sizeEl.textContent = '(' + (f.size / 1024).toFixed(1) + ' KB)';
+
+  // Enable analyze button
+  const btn = document.getElementById('analyzeBtn');
+  if (btn) btn.disabled = false;
+
+  // Clear any previous result
+  resetResult();
+
+  toast('✅ Image loaded — click Analyze to scan.', 'success');
+}
+
+/* ── clearFile: reset everything back to empty ── */
 function clearFile() {
   currentFile = null;
-  document.getElementById('fileInput').value = '';
-  document.getElementById('previewImg').src = '';
+
+  // Reset both inputs so same file can be re-selected
+  const fi = document.getElementById('fileInput');
+  const ci = document.getElementById('cameraInput');
+  if (fi) fi.value = '';
+  if (ci) ci.value = '';
+
+  // Clear preview
+  const img = document.getElementById('previewImg');
+  if (img) img.src = '';
   dz.classList.remove('has-img');
-  document.getElementById('fileRow').style.display = 'none';
-  document.getElementById('analyzeBtn').disabled = true;
+
+  // Hide file info row
+  const row = document.getElementById('fileRow');
+  if (row) row.style.display = 'none';
+
+  // Disable analyze button
+  const btn = document.getElementById('analyzeBtn');
+  if (btn) btn.disabled = true;
+
   resetResult();
 }
 
@@ -2103,58 +2281,79 @@ new Chart(document.getElementById('lineChart'), {
 renderHistory();
 
 /* ══════════════════════════════════════════════════
-   HOSPITAL LOCATOR MAP
+   HOSPITAL LOCATOR MAP — World Search
+   Supports: free-text search + 200+ city dropdown
 ══════════════════════════════════════════════════ */
-function loadMap(locationQuery, displayName) {
+
+/**
+ * Core function: show map for any location string
+ * @param {string} locationStr  – e.g. "Tokyo, Japan" or "Cairo"
+ */
+function loadMap(locationStr) {
   const frame = document.getElementById('mapFrame');
   const ph    = document.getElementById('mapPlaceholder');
 
-  if (!locationQuery) {
-    clearMap();
+  if (!locationStr || !locationStr.trim()) {
+    frame.style.display = 'none';
+    ph.style.display    = 'flex';
     return;
   }
 
-  // Safe Google Maps Embed trick with query encoding
-  const query = encodeURIComponent('dermatologist hospital skin clinic in ' + locationQuery);
-  frame.src   = 'https://maps.google.com/maps?q=' + query + '&t=&z=13&ie=UTF8&iwloc=&output=embed';
-  
+  const query = encodeURIComponent(
+    'skin cancer dermatologist hospital near ' + locationStr.trim()
+  );
+
+  // Use Google Maps embed search — works for any city in the world
+  frame.src = 'https://maps.google.com/maps?q=' + query +
+              '&output=embed&z=13&hl=en';
+
   ph.style.display    = 'none';
   frame.style.display = 'block';
-  toast('📍 Loading hospitals near ' + displayName + '…', 'success');
+
+  // Show city name in toast (first segment before comma)
+  const label = locationStr.split(',')[0].trim();
+  toast('📍 Loading dermatologists in ' + label + '…', 'success');
 }
 
+/** Called by the Search button or Enter key in the text input */
 function searchCity() {
   const input = document.getElementById('citySearch');
-  const val = input.value.trim();
-  if(val !== "") {
-     // Reset dropdown if searching via text
-     document.getElementById('citySelect').value = "";
-     loadMap(val, val);
-  } else {
-     toast('⚠️ Please enter a city name to search.', 'error');
+  const val   = input ? input.value.trim() : '';
+  if (!val) {
+    toast('⚠️ Please type a city name to search.', 'error');
+    return;
   }
+  // Reset dropdown so it doesn't look out of sync
+  const sel = document.getElementById('citySelect');
+  if (sel) sel.value = '';
+  loadMap(val);
 }
 
+/** Called when user picks from the dropdown */
 function selectFromDropdown() {
-  const select = document.getElementById('citySelect');
-  const val = select.value;
-  if(val !== "") {
-     // Reset search input if picking from dropdown
-     document.getElementById('citySearch').value = "";
-     // Extract a short display name (the part before the first comma)
-     const displayName = val.split(',')[0];
-     loadMap(val, displayName);
-  } else {
-     clearMap();
-  }
+  const sel = document.getElementById('citySelect');
+  const val = sel ? sel.value : '';
+  if (!val) return;
+  // Clear text input so it doesn't look out of sync
+  const input = document.getElementById('citySearch');
+  if (input) input.value = '';
+  loadMap(val);
 }
 
+/** Legacy alias — keeps backward compat if anything still calls updateMap() */
+function updateMap() { selectFromDropdown(); }
+
+/** Clear map and reset both controls */
 function clearMap() {
-  document.getElementById('citySearch').value = "";
-  document.getElementById('citySelect').value = "";
-  document.getElementById('mapFrame').style.display = 'none';
-  document.getElementById('mapFrame').src = '';
-  document.getElementById('mapPlaceholder').style.display = 'flex';
+  const frame = document.getElementById('mapFrame');
+  const ph    = document.getElementById('mapPlaceholder');
+  const input = document.getElementById('citySearch');
+  const sel   = document.getElementById('citySelect');
+
+  if (frame) { frame.src = ''; frame.style.display = 'none'; }
+  if (ph)    ph.style.display = 'flex';
+  if (input) input.value = '';
+  if (sel)   sel.value   = '';
 }
 
 /* ══════════════════════════════════════════════════
@@ -2210,7 +2409,7 @@ function addDevLog(msg, type) {
   const time = new Date().toLocaleTimeString('en-IN', { hour12: false });
   const line = document.createElement('div');
   line.className = 'dev-log-line';
-  line.innerHTML = '<span class="log-time">[' + time + ']</span>  ' +
+  line.innerHTML = '<span class="log-time">[' + time + ']</span>&nbsp; ' +
                    '<span class="log-' + type + '">' + msg + '</span>';
   log.appendChild(line);
   log.scrollTop = log.scrollHeight;
@@ -2283,13 +2482,7 @@ runAnalysis = async function() {
   }
 };
 
-/* ════════════════════════════════════════════════════════════════════════
-   FEATURE 1: MOBILE CAMERA CAPTURE
-   ════════════════════════════════════════════════════════════════════════ */
-/* Opens the hidden camera-only input (separate from gallery fileInput) */
-function openCamera() {
-  document.getElementById('cameraInput').click();
-}
+/* Camera: openCamera() defined in upload section above */
 
 /* ════════════════════════════════════════════════════════════════════════
    FEATURE 2: REGIONAL LANGUAGE TOGGLE — English / Hindi / Marathi
@@ -2463,6 +2656,7 @@ function downloadPDFReport() {
 
 </script>
 
+<!-- ══ FLOATING LANGUAGE TOGGLE (bottom-right fixed) ══ -->
 <div class="lang-fab" title="Switch language">
   <span class="lang-fab-icon">🌐</span>
   <select id="langSelect" onchange="changeLanguage(this.value)" aria-label="Select language">
@@ -2472,6 +2666,7 @@ function downloadPDFReport() {
   </select>
 </div>
 
+<!-- ══ HIDDEN PDF REPORT TEMPLATE ══════════════════════ -->
 <div id="pdfReportWrap">
   <div id="pdfReportContent" style="
     width:794px; padding:44px 52px;
@@ -2479,6 +2674,7 @@ function downloadPDFReport() {
     color:#111827; background:#ffffff; line-height:1.65;
   ">
 
+    <!-- PDF Header -->
     <div style="display:flex;justify-content:space-between;align-items:flex-start;
                 border-bottom:3px solid #3b6ff0;padding-bottom:16px;margin-bottom:20px;">
       <div>
@@ -2489,7 +2685,7 @@ function downloadPDFReport() {
           AI-Assisted Skin Lesion Classification Platform
         </div>
         <div style="font-size:10px;color:#9ca3af;margin-top:2px;">
-          KCES's College of Engineering & Management, Jalgaon · Research Use Only
+          KCES's College of Engineering &amp; Management, Jalgaon · Research Use Only
         </div>
       </div>
       <div style="text-align:right;">
@@ -2502,6 +2698,7 @@ function downloadPDFReport() {
       </div>
     </div>
 
+    <!-- Scan metadata row -->
     <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
       <tr>
         <td style="width:48%;vertical-align:top;padding-right:14px;">
@@ -2568,12 +2765,14 @@ function downloadPDFReport() {
       </tr>
     </table>
 
+    <!-- Classification Result -->
     <div style="margin-bottom:18px;">
       <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
                   text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
         AI Classification Result
       </div>
 
+      <!-- Verdict banner -->
       <div id="pdf-verdict-banner" style="border-radius:9px;border:1px solid;
            padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         <span id="pdf-verdict-emoji" style="font-size:26px;">—</span>
@@ -2583,6 +2782,7 @@ function downloadPDFReport() {
         </div>
       </div>
 
+      <!-- Confidence bar -->
       <div style="margin-bottom:12px;">
         <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px;">
           <span style="color:#6b7280;font-weight:500;">Confidence Score</span>
@@ -2595,6 +2795,7 @@ function downloadPDFReport() {
         </div>
       </div>
 
+      <!-- Probability pills -->
       <div style="display:flex;gap:10px;margin-bottom:12px;">
         <div style="flex:1;padding:10px 12px;background:#f0fdf6;
                     border:1px solid #bbf7d4;border-radius:7px;">
@@ -2610,6 +2811,7 @@ function downloadPDFReport() {
         </div>
       </div>
 
+      <!-- Recommended action -->
       <div style="padding:11px 13px;background:#eef2fe;
                   border:1px solid rgba(59,111,240,0.2);border-radius:7px;
                   font-size:12px;color:#1f3864;">
@@ -2619,10 +2821,11 @@ function downloadPDFReport() {
       </div>
     </div>
 
+    <!-- ── PHOTOGRAPHIC PRECAUTIONS (hardcoded clinical section) ── -->
     <div style="margin-bottom:18px;">
       <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
                   text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
-        📷 Clinical & Photographic Precautions for Accurate AI Analysis
+        📷 Clinical &amp; Photographic Precautions for Accurate AI Analysis
       </div>
       <table style="width:100%;border-collapse:collapse;">
         <thead>
@@ -2649,7 +2852,7 @@ function downloadPDFReport() {
             <td style="padding:7px 10px;font-size:11px;font-weight:600;
                        border:1px solid #e4e8ef;color:#1f3864;">🔍 Focal Blur Warning</td>
             <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
-              Maintain a minimum shooting distance of 5–8 cm with macro focus enabled. Motion blur, camera shake, or depth-of-field defocus causes MobileNetV2's high-frequency texture features (dermoscopic patterns) to degrade. Images with BRISQUE score > 50 should be recaptured before submission.
+              Maintain a minimum shooting distance of 5–8 cm with macro focus enabled. Motion blur, camera shake, or depth-of-field defocus causes MobileNetV2's high-frequency texture features (dermoscopic patterns) to degrade. Images with BRISQUE score &gt; 50 should be recaptured before submission.
             </td>
           </tr>
           <tr style="background:#f9fafb;">
@@ -2661,7 +2864,7 @@ function downloadPDFReport() {
           </tr>
           <tr style="background:#ffffff;">
             <td style="padding:7px 10px;font-size:11px;font-weight:600;
-                       border:1px solid #e4e8ef;color:#1f3864;">📐 Framing & Centering</td>
+                       border:1px solid #e4e8ef;color:#1f3864;">📐 Framing &amp; Centering</td>
             <td style="padding:7px 10px;font-size:11px;border:1px solid #e4e8ef;color:#374151;">
               Centre the lesion within the frame with a 10–15 mm clear margin of surrounding healthy skin visible. Cropped or edge-touching lesions prevent the model from evaluating border irregularity (B-criterion) correctly. The image will be resized to 224×224 px — extreme aspect ratios distort the lesion shape.
             </td>
@@ -2677,6 +2880,7 @@ function downloadPDFReport() {
       </table>
     </div>
 
+    <!-- ── FUTURE SUGGESTIONS (Phase III roadmap) ── -->
     <div style="margin-bottom:18px;">
       <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
                   text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">
@@ -2691,7 +2895,7 @@ function downloadPDFReport() {
             </th>
             <th style="padding:7px 10px;text-align:left;color:#ffffff;
                        font-size:10px;font-weight:600;border:1px solid #c8d9e6;">
-              Technical Description & Clinical Impact
+              Technical Description &amp; Clinical Impact
             </th>
           </tr>
         </thead>
@@ -2735,6 +2939,7 @@ function downloadPDFReport() {
       </table>
     </div>
 
+    <!-- ABCDE Quick Reference -->
     <div style="margin-bottom:16px;">
       <div style="font-size:9.5px;font-weight:700;color:#8fa3bb;
                   text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;">
@@ -2764,6 +2969,7 @@ function downloadPDFReport() {
       </div>
     </div>
 
+    <!-- Medical Disclaimer -->
     <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:7px;
                 padding:11px 13px;font-size:10.5px;color:#78350f;line-height:1.6;
                 margin-bottom:14px;">
@@ -2775,6 +2981,7 @@ function downloadPDFReport() {
       lesion, consult a board-certified dermatologist immediately.
     </div>
 
+    <!-- Footer -->
     <div style="border-top:1px solid #e4e8ef;padding-top:11px;
                 display:flex;justify-content:space-between;
                 font-size:10px;color:#9ca3af;align-items:center;">
@@ -2782,5 +2989,8 @@ function downloadPDFReport() {
       <span id="pdf-footer-ts">—</span>
     </div>
 
-  </div></div></body>
+  </div><!-- end #pdfReportContent -->
+</div><!-- end #pdfReportWrap -->
+
+</body>
 </html>
