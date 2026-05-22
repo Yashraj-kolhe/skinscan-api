@@ -2004,10 +2004,10 @@ tr:hover td { background: var(--surface-2); }
             <a class="dev-link" id="devLogsLink" href="https://dashboard.render.com" target="_blank" rel="noopener">
               📋 Live Logs
             </a>
-            <a class="dev-link" id="devDocsLink" href="http://localhost:8000/docs" target="_blank" rel="noopener">
+            <a class="dev-link" id="devDocsLink" href="https://skinscan-api-herm.onrender.com/docs" target="_blank" rel="noopener">
               📖 FastAPI Docs
             </a>
-            <a class="dev-link" id="devHealthLink" href="http://localhost:8000/health" target="_blank" rel="noopener">
+            <a class="dev-link" id="devHealthLink" href="https://skinscan-api-herm.onrender.com/health" target="_blank" rel="noopener">
               ❤️ Health Check
             </a>
             <a class="dev-link" href="#" onclick="exportDevReport();return false;">
@@ -2024,7 +2024,7 @@ tr:hover td { background: var(--surface-2); }
 
 <script>
 /* ── Config ──────────────────────────────────── */
-const DEFAULT_URL = localStorage.getItem('apiUrl') || 'http://localhost:8000';
+const DEFAULT_URL = localStorage.getItem('apiUrl') || 'https://skinscan-api-herm.onrender.com';
 document.getElementById('apiUrl').value = DEFAULT_URL;
 
 let currentFile = null;
